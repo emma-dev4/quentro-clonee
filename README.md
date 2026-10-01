@@ -6,9 +6,13 @@ Dark wallet for BTS World Tour tickets (Lima + La Plata).
 
 Open this link:
 
-**https://emma-dev4.github.io/quentro-tickets/**
+**https://emma-dev4.github.io/quentro-clonee/**
 
 Add to Home Screen from Safari or Chrome for a full-screen pass.
+
+## Source
+
+Public repo: https://github.com/emma-dev4/quentro-tickets
 
 ## What’s inside
 
