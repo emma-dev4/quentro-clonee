@@ -1,0 +1,296 @@
+:root {
+  --bg: #0f0f0f;
+  --surface: #1c1c1e;
+  --fg: #ffffff;
+  --muted: #8e8e93;
+  --accent: #2dd4bf;
+  --paper: #ffffff;
+  --paper-fg: #1a1a1a;
+  --paper-muted: #9b9b9b;
+  --banner: #eceff1;
+  --info: #dff3fb;
+  --info-fg: #4eb6d0;
+  --bar: #1c2426;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--fg); }
+body {
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+#app {
+  max-width: 430px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  background: var(--bg);
+}
+
+button { font-family: inherit; cursor: pointer; }
+a { color: inherit; text-decoration: none; }
+
+.list-page { padding: 12px 16px 40px; }
+.list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0 16px;
+}
+.list-header h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.icon-row { display: flex; gap: 10px; }
+.icon-btn {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--fg);
+  display: grid;
+  place-items: center;
+}
+
+.seg {
+  display: flex;
+  width: 100%;
+  border-radius: 999px;
+  background: var(--surface);
+  padding: 2px;
+  margin-bottom: 28px;
+}
+.seg button {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 600;
+  padding: 10px 28px;
+  border-radius: 999px;
+}
+.seg button.active {
+  background: #fff;
+  color: #000;
+  box-shadow: 0 1px 2px rgba(0,0,0,.12);
+}
+.seg .past { flex: 1; }
+
+.month {
+  margin: 0 0 14px;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.ticket-card {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.ticket-card img {
+  width: 108px;
+  min-width: 108px;
+  height: 108px;
+  object-fit: cover;
+  border-radius: 16px;
+  background: var(--surface);
+}
+.ticket-card .meta {
+  flex: 1;
+  min-width: 0;
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+}
+.qty { color: var(--accent); font-weight: 600; font-size: 13px; }
+.when { color: var(--muted); font-weight: 500; font-size: 13px; }
+.ticket-card h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.venue { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.3; }
+
+.empty {
+  min-height: 52vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 20px;
+}
+.empty h2 { margin: 0 0 10px; font-size: 17px; }
+.empty p { margin: 0; max-width: 260px; color: var(--muted); font-size: 14px; line-height: 1.35; }
+
+.pass-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 16px 12px 12px;
+}
+.back {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  background: transparent;
+  color: var(--fg);
+  display: grid;
+  place-items: center;
+}
+.pass-header h1 { margin: 4px 0 0; font-size: 18px; font-weight: 600; }
+.pass-header p { margin: 2px 0 0; font-size: 14px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.pass {
+  margin: 0 12px 32px;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--paper);
+  color: var(--paper-fg);
+}
+.pass-photo {
+  height: 192px;
+  background: var(--banner);
+  position: relative;
+}
+.pass-photo img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top;
+}
+.accent-bar {
+  height: 4px;
+  background: var(--banner);
+  position: relative;
+}
+.accent-bar span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 33%;
+  background: var(--accent);
+}
+
+.qr-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px;
+  background: var(--paper);
+}
+.qr-row svg { width: 120px; height: 120px; flex-shrink: 0; }
+.sector { flex: 1; display: flex; flex-direction: column; min-height: 120px; }
+.micro {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--paper-muted);
+}
+.sector .value { margin: 4px 0 0; font-size: 14px; font-weight: 500; }
+.mas-info {
+  margin-top: auto;
+  width: 100%;
+  border: 0;
+  border-radius: 12px;
+  background: var(--info);
+  color: var(--info-fg);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 12px;
+}
+
+.facts {
+  margin: 0 12px 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px 32px;
+  padding: 20px;
+}
+.facts .value { margin: 4px 0 0; font-size: 14px; font-weight: 500; }
+
+.transfer {
+  width: 100%;
+  border: 0;
+  background: var(--bar);
+  color: var(--fg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  font-size: 14px;
+  font-weight: 500;
+}
+.transfer svg { color: var(--accent); }
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  display: grid;
+  place-items: end center;
+  padding: 16px;
+  z-index: 20;
+}
+.sheet {
+  width: 100%;
+  max-width: 430px;
+  background: var(--paper);
+  color: var(--paper-fg);
+  border-radius: 16px;
+  padding: 20px;
+}
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.sheet-head h2 { margin: 0; font-size: 16px; }
+.sheet-head button { border: 0; background: transparent; color: var(--paper-muted); font-size: 14px; }
+.row { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; margin-bottom: 12px; }
+.row dt { color: var(--paper-muted); }
+.row dd { margin: 0; font-weight: 500; text-align: right; }
+
+.sheet label {
+  display: block;
+  font-size: 10px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--paper-muted);
+  margin-bottom: 8px;
+}
+.sheet input {
+  width: 100%;
+  height: 44px;
+  border-radius: 8px;
+  border: 1px solid var(--banner);
+  padding: 0 12px;
+  font-size: 14px;
+  outline: none;
+}
+.sheet .send {
+  margin-top: 12px;
+  width: 100%;
+  border: 0;
+  border-radius: 12px;
+  background: var(--bar);
+  color: var(--fg);
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 500;
+}
