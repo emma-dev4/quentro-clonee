@@ -1,39 +1,5 @@
 const TICKETS = [
   {
-    id: "lima-oct-07",
-    title: "BTS World Tour",
-    qty: 2,
-    when: "miércoles 7 20:00hs",
-    venue: "Estadio San Marcos",
-    city: "Lima, Perú",
-    month: "Octubre 2026",
-    image: "posters/lima.jpg",
-    thumb: "posters/lima-thumb.jpg",
-    dateLabel: "Mié, 7 oct 2026",
-    timeLabel: "20:00",
-    section: "Tribuna Norte",
-    row: "19",
-    seat: "Asientos consecutivos",
-    doors: "No publicado",
-  },
-  {
-    id: "lima-oct-09",
-    title: "BTS World Tour",
-    qty: 2,
-    when: "viernes 9 20:00hs",
-    venue: "Estadio San Marcos",
-    city: "Lima, Perú",
-    month: "Octubre 2026",
-    image: "posters/lima.jpg",
-    thumb: "posters/lima-thumb.jpg",
-    dateLabel: "Vie, 9 oct 2026",
-    timeLabel: "20:00",
-    section: "Tribuna Occidente",
-    row: "22",
-    seat: "Asientos consecutivos",
-    doors: "No publicado",
-  },
-  {
     id: "lima-oct-10",
     title: "BTS World Tour",
     qty: 2,
@@ -156,41 +122,68 @@ function route() {
   return { name: "list" };
 }
 
+function panel(name) {
+  return document.querySelector(`[data-panel="${name}"]`);
+}
+
 function render() {
-  const r = route();
   const app = document.getElementById("app");
   if (!app.dataset.mounted) {
-    app.innerHTML = `<div id="view-list"></div><div id="view-screen" hidden></div>`;
+    app.innerHTML = `
+      <div data-panel="list"></div>
+      <div data-panel="notifications" hidden></div>
+      <div data-panel="account" hidden></div>
+      ${TICKETS.map((t) => `<div data-panel="ticket-${t.id}" hidden></div>`).join("")}
+    `;
     app.dataset.mounted = "1";
-  }
-  const list = document.getElementById("view-list");
-  const screen = document.getElementById("view-screen");
-
-  if (r.name === "list") {
-    if (list.dataset.tab !== tab) {
-      list.innerHTML = listView();
-      list.dataset.tab = tab;
-      bindList();
+    panel("notifications").innerHTML = notificationsView();
+    for (const ticket of TICKETS) {
+      const node = panel(`ticket-${ticket.id}`);
+      node.innerHTML = passView(ticket);
+      bindPass(ticket, node);
+      const preload = new Image();
+      preload.src = ticket.image;
     }
-    list.hidden = false;
-    screen.hidden = true;
-    return;
   }
 
-  list.hidden = true;
-  screen.hidden = false;
+  const r = route();
+  const list = panel("list");
+  if (list.dataset.tab !== tab) {
+    list.innerHTML = listView();
+    list.dataset.tab = tab;
+    bindList();
+  }
+
+  let active = "list";
+  if (r.name === "notifications") active = "notifications";
+  if (r.name === "account") {
+    active = "account";
+    const account = panel("account");
+    account.innerHTML = accountView();
+    bindAccount();
+  }
   if (r.name === "ticket") {
     const ticket = TICKETS.find((t) => t.id === r.id);
-    screen.innerHTML = ticket ? passView(ticket) : notFound();
-    bindPass(ticket);
-    return;
+    if (!ticket) {
+      active = "missing";
+      if (!panel("missing")) {
+        app.insertAdjacentHTML("beforeend", `<div data-panel="missing"></div>`);
+      }
+      panel("missing").innerHTML = notFound();
+    } else {
+      active = `ticket-${r.id}`;
+      const node = panel(active);
+      if (sheet || node.dataset.sheet) {
+        node.innerHTML = passView(ticket);
+        bindPass(ticket, node);
+        node.dataset.sheet = sheet ? "1" : "";
+      }
+    }
   }
-  if (r.name === "notifications") {
-    screen.innerHTML = notificationsView();
-    return;
-  }
-  screen.innerHTML = accountView();
-  bindAccount();
+
+  document.querySelectorAll("[data-panel]").forEach((el) => {
+    el.hidden = el.dataset.panel !== active;
+  });
 }
 
 function listView() {
@@ -478,18 +471,18 @@ function bindList() {
   });
 }
 
-function bindPass(ticket) {
-  if (!ticket) return;
-  document.querySelector("[data-info]")?.addEventListener("click", () => {
+function bindPass(ticket, root) {
+  if (!ticket || !root) return;
+  root.querySelector("[data-info]")?.addEventListener("click", () => {
     sheet = "info";
     render();
   });
-  document.querySelector("[data-transfer]")?.addEventListener("click", () => {
+  root.querySelector("[data-transfer]")?.addEventListener("click", () => {
     sent = false;
     sheet = "transfer";
     render();
   });
-  document.querySelectorAll("[data-close]").forEach((el) => {
+  root.querySelectorAll("[data-close]").forEach((el) => {
     el.addEventListener("click", (e) => {
       if (e.target === el) {
         sheet = null;
@@ -497,12 +490,12 @@ function bindPass(ticket) {
       }
     });
   });
-  document.querySelector(".sheet")?.addEventListener("click", (e) => e.stopPropagation());
-  const form = document.getElementById("transfer-form");
+  root.querySelector(".sheet")?.addEventListener("click", (e) => e.stopPropagation());
+  const form = root.querySelector("#transfer-form");
   if (form) {
     form.addEventListener("submit", (e) => {
       e.preventDefault();
-      email = document.getElementById("to-email").value;
+      email = root.querySelector("#to-email").value;
       if (email.includes("@")) {
         sent = true;
         render();
