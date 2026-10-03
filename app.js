@@ -8,6 +8,7 @@ const TICKETS = [
     city: "Lima, Perú",
     month: "Octubre 2026",
     image: "posters/lima.jpg",
+    thumb: "posters/lima-thumb.jpg",
     dateLabel: "Mié, 7 oct 2026",
     timeLabel: "20:00",
     section: "Tribuna Norte",
@@ -24,6 +25,7 @@ const TICKETS = [
     city: "Lima, Perú",
     month: "Octubre 2026",
     image: "posters/lima.jpg",
+    thumb: "posters/lima-thumb.jpg",
     dateLabel: "Vie, 9 oct 2026",
     timeLabel: "20:00",
     section: "Tribuna Occidente",
@@ -40,6 +42,7 @@ const TICKETS = [
     city: "Lima, Perú",
     month: "Octubre 2026",
     image: "posters/lima.jpg",
+    thumb: "posters/lima-thumb.jpg",
     dateLabel: "Sáb, 10 oct 2026",
     timeLabel: "20:00",
     section: "Tribuna Occidente",
@@ -56,6 +59,7 @@ const TICKETS = [
     city: "La Plata, Argentina",
     month: "Octubre 2026",
     image: "posters/argentina.jpg",
+    thumb: "posters/argentina-thumb.jpg",
     dateLabel: "Sáb, 24 oct 2026",
     timeLabel: "20:00",
     section: "Cabecera Norte",
@@ -155,29 +159,44 @@ function route() {
 function render() {
   const r = route();
   const app = document.getElementById("app");
+  if (!app.dataset.mounted) {
+    app.innerHTML = `<div id="view-list"></div><div id="view-screen" hidden></div>`;
+    app.dataset.mounted = "1";
+  }
+  const list = document.getElementById("view-list");
+  const screen = document.getElementById("view-screen");
+
+  if (r.name === "list") {
+    if (list.dataset.tab !== tab) {
+      list.innerHTML = listView();
+      list.dataset.tab = tab;
+      bindList();
+    }
+    list.hidden = false;
+    screen.hidden = true;
+    return;
+  }
+
+  list.hidden = true;
+  screen.hidden = false;
   if (r.name === "ticket") {
     const ticket = TICKETS.find((t) => t.id === r.id);
-    app.innerHTML = ticket ? passView(ticket) : notFound();
+    screen.innerHTML = ticket ? passView(ticket) : notFound();
     bindPass(ticket);
     return;
   }
   if (r.name === "notifications") {
-    app.innerHTML = notificationsView();
+    screen.innerHTML = notificationsView();
     return;
   }
-  if (r.name === "account") {
-    app.innerHTML = accountView();
-    bindAccount();
-    return;
-  }
-  app.innerHTML = listView();
-  bindList();
+  screen.innerHTML = accountView();
+  bindAccount();
 }
 
 function listView() {
   const cards = TICKETS.map((t) => `
     <a class="ticket-card" href="#/ticket/${t.id}">
-      <img src="${t.image}" alt="" />
+      <img src="${t.thumb}" alt="" width="108" height="108" decoding="async" />
       <div class="meta">
         <p><span class="qty">${t.qty} entradas</span> <span class="when">${t.when}</span></p>
         <h3>${t.title}</h3>
@@ -251,7 +270,7 @@ function passView(t) {
       </div>
     </header>
     <article class="pass">
-      <div class="pass-photo"><img src="${t.image}" alt="BTS World Tour" /></div>
+      <div class="pass-photo"><img src="${t.image}" alt="BTS World Tour" width="960" height="427" decoding="async" /></div>
       <div class="accent-bar"><span></span></div>
       <div class="qr-row">
         ${QR}
@@ -297,7 +316,9 @@ function notificationsView() {
 }
 
 function accountView() {
-  const flag = profile.country.toLowerCase() === "argentina" ? `<span class="flag">🇦🇷</span>` : "";
+  const flag = profile.country.toLowerCase() === "argentina"
+    ? `<svg class="flag-svg" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#74acdf"/><rect y="6.7" width="30" height="6.6" fill="#fff"/><circle cx="15" cy="10" r="2.3" fill="#f6b40e"/></svg>`
+    : "";
   const help = helpOpen
     ? `<div class="overlay" data-help-close>
         <div class="sheet">
