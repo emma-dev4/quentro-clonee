@@ -504,6 +504,15 @@ function bindPass(ticket, root) {
   }
 }
 
+document.addEventListener("click", (event) => {
+  const link = event.target.closest("a[href^='#/']");
+  if (!link) return;
+  event.preventDefault();
+  const hash = link.getAttribute("href");
+  if (location.hash !== hash) history.pushState(null, "", hash);
+  render();
+});
+
 window.addEventListener("hashchange", () => {
   sheet = null;
   sent = false;
