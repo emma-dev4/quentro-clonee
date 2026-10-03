@@ -106,17 +106,49 @@ const ICONS = {
   user: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
   back: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>`,
   upload: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>`,
+  share: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>`,
+  pencil: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>`,
 };
 
 let tab = "upcoming";
 let sheet = null;
 let sent = false;
 let email = "";
+let accountTab = "id";
+let editing = null;
+let helpOpen = false;
+let copied = false;
+
+const PROFILE_KEY = "quentro-profile";
+const DEFAULT_PROFILE = {
+  email: "genesisstars10@gmail.com",
+  name: "Rosa",
+  country: "Argentina",
+  dob: "27/06/2001",
+  pinOn: false,
+};
+let profile = loadProfile();
+
+function loadProfile() {
+  try {
+    const raw = localStorage.getItem(PROFILE_KEY);
+    return raw ? { ...DEFAULT_PROFILE, ...JSON.parse(raw) } : { ...DEFAULT_PROFILE };
+  } catch {
+    return { ...DEFAULT_PROFILE };
+  }
+}
+
+function saveProfile(next) {
+  profile = next;
+  localStorage.setItem(PROFILE_KEY, JSON.stringify(next));
+}
 
 function route() {
   const hash = location.hash.replace(/^#/, "") || "/";
   const match = hash.match(/^\/ticket\/([^/]+)/);
   if (match) return { name: "ticket", id: match[1] };
+  if (hash === "/notifications") return { name: "notifications" };
+  if (hash === "/account") return { name: "account" };
   return { name: "list" };
 }
 
@@ -127,6 +159,15 @@ function render() {
     const ticket = TICKETS.find((t) => t.id === r.id);
     app.innerHTML = ticket ? passView(ticket) : notFound();
     bindPass(ticket);
+    return;
+  }
+  if (r.name === "notifications") {
+    app.innerHTML = notificationsView();
+    return;
+  }
+  if (r.name === "account") {
+    app.innerHTML = accountView();
+    bindAccount();
     return;
   }
   app.innerHTML = listView();
@@ -150,8 +191,8 @@ function listView() {
       <header class="list-header">
         <h1>My Tickets</h1>
         <div class="icon-row">
-          <button class="icon-btn" aria-label="Notifications">${ICONS.bell}</button>
-          <button class="icon-btn" aria-label="Profile">${ICONS.user}</button>
+          <a class="icon-btn" href="#/notifications" aria-label="Notifications">${ICONS.bell}</a>
+          <a class="icon-btn" href="#/account" aria-label="Account">${ICONS.user}</a>
         </div>
       </header>
       <div class="seg">
@@ -238,6 +279,173 @@ function row(label, value) {
 
 function notFound() {
   return `<div class="empty"><h2>Ticket not found.</h2><p><a href="#/">Back to My Tickets</a></p></div>`;
+}
+
+function notificationsView() {
+  return `
+    <div class="screen">
+      <header class="screen-header">
+        <a class="back" href="#/" aria-label="Back">${ICONS.back}</a>
+        <h1>Notifications</h1>
+      </header>
+      <div class="notify-empty">
+        <div class="notify-bell">${ICONS.bell}</div>
+        <p>You don't have any notifications yet.</p>
+      </div>
+    </div>
+  `;
+}
+
+function accountView() {
+  const flag = profile.country.toLowerCase() === "argentina" ? `<span class="flag">🇦🇷</span>` : "";
+  const help = helpOpen
+    ? `<div class="overlay" data-help-close>
+        <div class="sheet">
+          <div class="sheet-head"><h2>Need help?</h2><button type="button" data-help-close>Close</button></div>
+          <p>For ticket transfers or account issues, write from ${profile.email}. Your Quentro ID QR is on the first tab if someone needs to scan it.</p>
+        </div>
+      </div>`
+    : "";
+
+  return `
+    <div class="screen">
+      <header class="screen-header">
+        <a class="back" href="#/" aria-label="Back">${ICONS.back}</a>
+        <h1>Account</h1>
+        <button class="share-btn" type="button" data-share aria-label="Share Quentro ID">${ICONS.share}</button>
+      </header>
+      ${copied ? `<p class="copied">Quentro ID copied</p>` : ""}
+      <div class="account-tabs">
+        <button type="button" data-account-tab="id" class="${accountTab === "id" ? "active" : ""}">Quentro ID</button>
+        <button type="button" data-account-tab="settings" class="${accountTab === "settings" ? "active" : ""}">Settings</button>
+      </div>
+      ${
+        accountTab === "id"
+          ? `<div class="id-wrap">
+              <div class="id-card">
+                <div class="id-qr">
+                  <img src="quentro-id-qr.png" alt="Quentro ID QR code" />
+                  <div class="id-meter"><span></span></div>
+                </div>
+                <h2>Quentro ID</h2>
+                <p>Show this QR code to transfer tickets to your account with a simple scan.</p>
+              </div>
+            </div>`
+          : `<div class="settings">
+              <h2>My Info</h2>
+              <div class="info-card">
+                ${infoRow("email", profile.email)}
+                ${infoRow("name", profile.name, true)}
+                ${infoRow("country", `${flag}${escapeHtml(profile.country)}`, true, true)}
+                ${infoRow("dob", profile.dob, true)}
+              </div>
+              <h2>Security</h2>
+              <div class="info-card">
+                <div class="info-row">
+                  <span>Security PIN</span>
+                  <button type="button" class="pin-switch ${profile.pinOn ? "on" : ""}" data-pin role="switch" aria-checked="${profile.pinOn}" aria-label="Security PIN"><span></span></button>
+                </div>
+                <p class="pin-copy">Secure your tickets with a PIN. We'll request it when transferring tickets, ensuring safety in case your device is lost or stolen.</p>
+              </div>
+            </div>`
+      }
+      <div class="help-wrap">
+        <button type="button" class="help-btn" data-help>Need Help?</button>
+      </div>
+      ${help}
+    </div>
+  `;
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, "&" + "amp;")
+    .replace(/</g, "&" + "lt;")
+    .replace(/>/g, "&" + "gt;")
+    .replace(/"/g, "&" + "quot;");
+}
+
+function infoRow(field, value, editable, html) {
+  const shown = editing === field
+    ? `<form data-edit-form><input name="value" value="${escapeHtml(profile[field])}" /></form>`
+    : `<span>${html ? value : escapeHtml(value)}</span>`;
+  const pencil = editable ? `<button type="button" data-edit="${field}" aria-label="Edit">${ICONS.pencil}</button>` : "";
+  return `<div class="info-row">${shown}${pencil}</div>`;
+}
+
+function bindAccount() {
+  document.querySelectorAll("[data-account-tab]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      accountTab = btn.getAttribute("data-account-tab");
+      editing = null;
+      helpOpen = false;
+      render();
+    });
+  });
+  document.querySelector("[data-pin]")?.addEventListener("click", () => {
+    saveProfile({ ...profile, pinOn: !profile.pinOn });
+    render();
+  });
+  document.querySelector("[data-help]")?.addEventListener("click", () => {
+    helpOpen = true;
+    render();
+  });
+  document.querySelectorAll("[data-help-close]").forEach((el) => {
+    el.addEventListener("click", (e) => {
+      if (e.target === el) {
+        helpOpen = false;
+        render();
+      }
+    });
+  });
+  document.querySelector(".sheet")?.addEventListener("click", (e) => e.stopPropagation());
+  document.querySelector("[data-share]")?.addEventListener("click", async () => {
+    const text = `Quentro ID · ${profile.email}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: "Quentro ID", text });
+        return;
+      }
+    } catch {
+      /* cancelled */
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      copied = true;
+      render();
+      setTimeout(() => {
+        copied = false;
+        if (route().name === "account") render();
+      }, 1600);
+    } catch {
+      copied = false;
+    }
+  });
+  document.querySelectorAll("[data-edit]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      editing = btn.getAttribute("data-edit");
+      render();
+      const input = document.querySelector("[data-edit-form] input");
+      input?.focus();
+      input?.select();
+    });
+  });
+  const form = document.querySelector("[data-edit-form]");
+  if (form) {
+    const commit = () => {
+      const value = new FormData(form).get("value");
+      if (editing && String(value).trim()) {
+        saveProfile({ ...profile, [editing]: String(value).trim() });
+      }
+      editing = null;
+      render();
+    };
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      commit();
+    });
+    form.querySelector("input")?.addEventListener("blur", commit);
+  }
 }
 
 function bindList() {
