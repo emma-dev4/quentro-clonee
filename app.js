@@ -1,22 +1,5 @@
 const TICKETS = [
   {
-    id: "lima-oct-10",
-    title: "BTS World Tour",
-    qty: 2,
-    when: "sábado 10 20:00hs",
-    venue: "Estadio San Marcos",
-    city: "Lima, Perú",
-    month: "Octubre 2026",
-    image: "posters/lima.jpg",
-    thumb: "posters/lima-thumb.jpg",
-    dateLabel: "Sáb, 10 oct 2026",
-    timeLabel: "20:00",
-    section: "Tribuna Occidente",
-    row: "22",
-    seat: "Asientos consecutivos",
-    doors: "No publicado",
-  },
-  {
     id: "laplata-oct-24",
     title: "BTS World Tour",
     qty: 2,
@@ -32,6 +15,10 @@ const TICKETS = [
     row: "19",
     seat: "Asientos consecutivos 37",
     doors: "16:00",
+    passes: [
+      { sector: "Cabecera Norte", section: "CN", row: "19", seat: "37" },
+      { sector: "Cabecera Norte", section: "CN", row: "19", seat: "38" },
+    ],
   },
 ];
 
@@ -75,7 +62,9 @@ const ICONS = {
   bell: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>`,
   user: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
   back: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>`,
-  upload: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>`,
+  upload: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>`,
+  close: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>`,
+  check: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg>`,
   share: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>`,
   pencil: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>`,
 };
@@ -83,7 +72,7 @@ const ICONS = {
 let tab = "upcoming";
 let sheet = null;
 let sent = false;
-let email = "";
+let picked = new Set(["37"]);
 let accountTab = "id";
 let editing = null;
 let helpOpen = false;
@@ -238,18 +227,31 @@ function passView(t) {
           </div>
         </div>`
       : sheet === "transfer"
-        ? `<div class="overlay" data-close>
-            <div class="sheet">
-              <div class="sheet-head"><h2>Transferir</h2><button type="button" data-close>Cerrar</button></div>
-              ${
-                sent
-                  ? `<p>Entrada marcada como transferida a ${email}.</p>`
-                  : `<form id="transfer-form">
-                      <label for="to-email">Correo del destinatario</label>
-                      <input id="to-email" type="email" required placeholder="nombre@correo.com" value="${email}" />
-                      <button class="send" type="submit">Enviar transferencia</button>
-                    </form>`
-              }
+        ? `<div class="picker">
+            <header class="picker-head">
+              <h2>Select tickets</h2>
+              <button type="button" data-close aria-label="Close">${ICONS.close}</button>
+            </header>
+            <div class="picker-list">
+              ${t.passes.map((pass) => {
+                const on = picked.has(pass.seat);
+                return `<button type="button" class="pick ${on ? "on" : ""}" data-pick="${pass.seat}">
+                  <span class="pick-box">${on ? ICONS.check : ""}</span>
+                  <span class="pick-card">
+                    <span class="pick-kicker">Sector</span>
+                    <span class="pick-name">${pass.sector}</span>
+                    <span class="pick-line"></span>
+                    <span class="pick-bits">
+                      <span><span class="pick-kicker">Section</span><b>${pass.section}</b></span>
+                      <span><span class="pick-kicker">Row</span><b>${pass.row}</b></span>
+                      <span><span class="pick-kicker">Seat</span><b>${pass.seat}</b></span>
+                    </span>
+                  </span>
+                </button>`;
+              }).join("")}
+            </div>
+            <div class="picker-foot">
+              <button type="button" class="picker-go" data-send ${picked.size === 0 ? "disabled" : ""}>${sent ? "Transferred" : "Transfer ticket"}</button>
             </div>
           </div>`
         : "";
@@ -261,6 +263,7 @@ function passView(t) {
         <h1>Evento</h1>
         <p>${t.dateLabel} - ${t.venue}</p>
       </div>
+      <button class="share-pass" type="button" data-transfer aria-label="Transferir">${ICONS.upload}</button>
     </header>
     <article class="pass">
       <div class="pass-photo"><img src="${t.image}" alt="BTS World Tour" width="960" height="427" decoding="async" /></div>
@@ -279,7 +282,6 @@ function passView(t) {
         <div><p class="micro">Apertura</p><p class="value">${t.doors}</p></div>
         <div><p class="micro">Inicio</p><p class="value">${t.timeLabel}</p></div>
       </div>
-      <button class="transfer" type="button" data-transfer>${ICONS.upload} Transferir</button>
     </article>
     ${modal}
   `;
@@ -479,29 +481,31 @@ function bindPass(ticket, root) {
   });
   root.querySelector("[data-transfer]")?.addEventListener("click", () => {
     sent = false;
+    picked = new Set([ticket.passes[0].seat]);
     sheet = "transfer";
+    render();
+  });
+  root.querySelectorAll("[data-pick]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const seat = btn.getAttribute("data-pick");
+      if (picked.has(seat)) picked.delete(seat);
+      else picked.add(seat);
+      render();
+    });
+  });
+  root.querySelector("[data-send]")?.addEventListener("click", () => {
+    if (picked.size === 0) return;
+    sent = true;
     render();
   });
   root.querySelectorAll("[data-close]").forEach((el) => {
     el.addEventListener("click", (e) => {
-      if (e.target === el) {
-        sheet = null;
-        render();
-      }
+      if (el.classList.contains("overlay") && e.target !== el) return;
+      sheet = null;
+      render();
     });
   });
   root.querySelector(".sheet")?.addEventListener("click", (e) => e.stopPropagation());
-  const form = root.querySelector("#transfer-form");
-  if (form) {
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
-      email = root.querySelector("#to-email").value;
-      if (email.includes("@")) {
-        sent = true;
-        render();
-      }
-    });
-  }
 }
 
 document.addEventListener("click", (event) => {
