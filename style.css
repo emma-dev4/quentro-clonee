@@ -271,8 +271,8 @@ a { color: inherit; text-decoration: none; }
   color: var(--paper-fg);
 }
 .pass-photo {
-  height: 192px;
-  background: var(--banner);
+  height: 224px;
+  background: #07090c;
   position: relative;
 }
 .pass-photo img {
@@ -280,8 +280,8 @@ a { color: inherit; text-decoration: none; }
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  object-position: top;
+  object-fit: contain;
+  object-position: center;
 }
 .accent-bar {
   height: 4px;
@@ -313,6 +313,7 @@ a { color: inherit; text-decoration: none; }
   color: var(--paper-muted);
 }
 .sector .value { margin: 4px 0 0; font-size: 14px; font-weight: 500; }
+.access { margin-top: 12px; }
 .mas-info {
   margin-top: auto;
   width: 100%;
@@ -328,8 +329,8 @@ a { color: inherit; text-decoration: none; }
 .facts {
   margin: 0 12px 12px;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px 32px;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 20px 16px;
   padding: 20px;
 }
 .facts .value { margin: 4px 0 0; font-size: 14px; font-weight: 500; }

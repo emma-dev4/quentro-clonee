@@ -1,20 +1,21 @@
 const TICKETS = [
   {
     id: "laplata-oct-24",
-    title: "BTS World Tour",
+    title: "BTS WORLD TOUR ARIRANG",
     qty: 2,
     when: "sábado 24 20:00hs",
     venue: "Estadio Único de La Plata",
     city: "La Plata, Argentina",
     month: "Octubre 2026",
-    image: "posters/argentina.jpg",
-    thumb: "posters/argentina-thumb.jpg",
+    image: "posters/argentina-arirang.jpg",
+    thumb: "posters/argentina-arirang-thumb.jpg",
     dateLabel: "Sáb, 24 oct 2026",
     timeLabel: "20:00",
     section: "Cabecera Norte",
     row: "19",
     seat: "Asientos consecutivos 37",
-    doors: "16:00",
+    doors: "16:00 hs",
+    gate: "Puerta Norte",
     passes: [
       { sector: "Cabecera Norte", section: "CN", row: "19", seat: "37" },
       { sector: "Cabecera Norte", section: "CN", row: "19", seat: "38" },
@@ -266,21 +267,24 @@ function passView(t) {
       <button class="share-pass" type="button" data-transfer aria-label="Transferir">${ICONS.upload}</button>
     </header>
     <article class="pass">
-      <div class="pass-photo"><img src="${t.image}" alt="BTS World Tour" width="960" height="427" decoding="async" /></div>
+      <div class="pass-photo"><img src="${t.image}" alt="BTS WORLD TOUR ARIRANG, La Plata" width="1400" height="700" decoding="async" /></div>
       <div class="accent-bar"><span></span></div>
       <div class="qr-row">
         ${QR}
         <div class="sector">
           <p class="micro">Sector</p>
           <p class="value">${t.section}</p>
+          <p class="micro access">Acceso</p>
+          <p class="value">${t.gate}</p>
           <button class="mas-info" type="button" data-info>Más info</button>
         </div>
       </div>
       <div class="facts">
-        <div><p class="micro">Sección</p><p class="value">${t.section}</p></div>
+        <div><p class="micro">Sección</p><p class="value">${t.passes[0].section}</p></div>
         <div><p class="micro">Fila</p><p class="value">${t.row}</p></div>
-        <div><p class="micro">Apertura</p><p class="value">${t.doors}</p></div>
-        <div><p class="micro">Inicio</p><p class="value">${t.timeLabel}</p></div>
+        <div><p class="micro">Asiento</p><p class="value">${t.passes[0].seat}</p></div>
+        <div><p class="micro">Apertura puertas</p><p class="value">${t.doors}</p></div>
+        <div><p class="micro">Inicio show</p><p class="value">${t.timeLabel} hs</p></div>
       </div>
     </article>
     ${modal}
