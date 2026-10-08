@@ -74,6 +74,47 @@ let tab = "upcoming";
 let sheet = null;
 let sent = false;
 let picked = new Set(["37"]);
+const LANG_KEY = "quentro-lang";
+let lang = localStorage.getItem(LANG_KEY) === "es" ? "es" : "en";
+const COPY = {
+  en: {
+    myTickets: "My Tickets", upcoming: "Upcoming", past: "Past",
+    noPastTitle: "No past tickets",
+    noPast: "Tickets from shows you’ve already attended will show up here.",
+    month: "October 2026", when: "Saturday 24 8:00pm", tickets: "2 tickets",
+    notifications: "Notifications", noNotes: "You don't have any notifications yet.",
+    account: "Account", settings: "Settings", myInfo: "My Info", security: "Security",
+    pin: "Security PIN",
+    pinCopy: "Secure your tickets with a PIN. We'll request it when transferring tickets, ensuring safety in case your device is lost or stolen.",
+    help: "Need Help?", needHelp: "Need help?", close: "Close",
+    helpBody: "For ticket transfers or account issues, write from your Quentro email. Your Quentro ID QR is on the first tab if someone needs to scan it.",
+    select: "Select tickets", transfer: "Transfer ticket", transferred: "Transferred",
+    event: "Event", more: "More info", sector: "Sector", access: "Access",
+    section: "Section", row: "Row", seat: "Seat", doors: "Doors open", start: "Show start",
+    copied: "Quentro ID copied",
+    idCopy: "Show this QR code to transfer tickets to your account with a simple scan.",
+    language: "Language",
+  },
+  es: {
+    myTickets: "Mis entradas", upcoming: "Próximos", past: "Pasados",
+    noPastTitle: "No hay entradas pasadas",
+    noPast: "Las entradas de shows a los que ya fuiste van a aparecer acá.",
+    month: "Octubre 2026", when: "sábado 24 20:00hs", tickets: "2 entradas",
+    notifications: "Notificaciones", noNotes: "Todavía no tenés notificaciones.",
+    account: "Cuenta", settings: "Ajustes", myInfo: "Mis datos", security: "Seguridad",
+    pin: "PIN de seguridad",
+    pinCopy: "Protegé tus entradas con un PIN. Lo vamos a pedir al transferir, por si perdés el teléfono.",
+    help: "¿Necesitás ayuda?", needHelp: "¿Necesitás ayuda?", close: "Cerrar",
+    helpBody: "Para transferencias o problemas de la cuenta, escribí desde tu correo de Quentro. El QR de tu Quentro ID está en la primera pestaña.",
+    select: "Elegir entradas", transfer: "Transferir entrada", transferred: "Transferida",
+    event: "Evento", more: "Más info", sector: "Sector", access: "Acceso",
+    section: "Sección", row: "Fila", seat: "Asiento", doors: "Apertura puertas", start: "Inicio show",
+    copied: "Quentro ID copiado",
+    idCopy: "Mostrá este código QR para pasar entradas a tu cuenta con un escaneo.",
+    language: "Idioma",
+  },
+};
+function tr(key) { return COPY[lang][key]; }
 let accountTab = "id";
 let editing = null;
 let helpOpen = false;
@@ -127,10 +168,12 @@ function render() {
     `;
     app.dataset.mounted = "1";
     panel("notifications").innerHTML = notificationsView();
+    panel("notifications").dataset.lang = lang;
     for (const ticket of TICKETS) {
       const node = panel(`ticket-${ticket.id}`);
       node.innerHTML = passView(ticket);
       bindPass(ticket, node);
+      node.dataset.lang = lang;
       const preload = new Image();
       preload.src = ticket.image;
     }
@@ -138,10 +181,17 @@ function render() {
 
   const r = route();
   const list = panel("list");
-  if (list.dataset.tab !== tab) {
+  if (list.dataset.tab !== tab || list.dataset.lang !== lang) {
     list.innerHTML = listView();
     list.dataset.tab = tab;
+    list.dataset.lang = lang;
     bindList();
+  }
+
+  const notes = panel("notifications");
+  if (notes.dataset.lang !== lang) {
+    notes.innerHTML = notificationsView();
+    notes.dataset.lang = lang;
   }
 
   let active = "list";
@@ -163,10 +213,11 @@ function render() {
     } else {
       active = `ticket-${r.id}`;
       const node = panel(active);
-      if (sheet || node.dataset.sheet) {
+      if (sheet || node.dataset.sheet || node.dataset.lang !== lang) {
         node.innerHTML = passView(ticket);
         bindPass(ticket, node);
         node.dataset.sheet = sheet ? "1" : "";
+        node.dataset.lang = lang;
       }
     }
   }
@@ -177,13 +228,13 @@ function render() {
 }
 
 function listView() {
-  const cards = TICKETS.map((t) => `
-    <a class="ticket-card" href="#/ticket/${t.id}">
-      <img src="${t.thumb}" alt="" width="108" height="108" decoding="async" />
+  const cards = TICKETS.map((ticket) => `
+    <a class="ticket-card" href="#/ticket/${ticket.id}">
+      <img src="${ticket.thumb}" alt="" width="640" height="640" decoding="async" />
       <div class="meta">
-        <p><span class="qty">${t.qty} entradas</span> <span class="when">${t.when}</span></p>
-        <h3>${t.title}</h3>
-        <p class="venue">${t.venue}</p>
+        <p><span class="qty">${tr("tickets")}</span> <span class="when">${tr("when")}</span></p>
+        <h3>${ticket.title}</h3>
+        <p class="venue">${ticket.venue}</p>
       </div>
     </a>
   `).join("");
@@ -191,20 +242,20 @@ function listView() {
   return `
     <div class="list-page">
       <header class="list-header">
-        <h1>My Tickets</h1>
+        <h1>${tr("myTickets")}</h1>
         <div class="icon-row">
           <a class="icon-btn" href="#/notifications" aria-label="Notifications">${ICONS.bell}</a>
           <a class="icon-btn" href="#/account" aria-label="Account">${ICONS.user}</a>
         </div>
       </header>
       <div class="seg">
-        <button data-tab="upcoming" class="${tab === "upcoming" ? "active" : ""}">Upcoming</button>
-        <button data-tab="past" class="past ${tab === "past" ? "active" : ""}">Past</button>
+        <button data-tab="upcoming" class="${tab === "upcoming" ? "active" : ""}">${tr("upcoming")}</button>
+        <button data-tab="past" class="past ${tab === "past" ? "active" : ""}">${tr("past")}</button>
       </div>
       ${
         tab === "past"
-          ? `<div class="empty"><h2>No past tickets</h2><p>Tickets from shows you’ve already attended will show up here.</p></div>`
-          : `<section><h2 class="month">Octubre 2026</h2>${cards}</section>`
+          ? `<div class="empty"><h2>${tr("noPastTitle")}</h2><p>${tr("noPast")}</p></div>`
+          : `<section><h2 class="month">${tr("month")}</h2>${cards}</section>`
       }
     </div>
   `;
@@ -215,9 +266,9 @@ function passView(t) {
     sheet === "info"
       ? `<div class="overlay" data-close>
           <div class="sheet">
-            <div class="sheet-head"><h2>Más info</h2><button type="button" data-close>Cerrar</button></div>
+            <div class="sheet-head"><h2>${tr("more")}</h2><button type="button" data-close>${tr("close")}</button></div>
             <dl>
-              ${row("Evento", t.title)}
+              ${row(tr("event"), t.title)}
               ${row("Fecha", t.dateLabel)}
               ${row("Hora", t.timeLabel)}
               ${row("Recinto", t.venue)}
@@ -230,7 +281,7 @@ function passView(t) {
       : sheet === "transfer"
         ? `<div class="picker">
             <header class="picker-head">
-              <h2>Select tickets</h2>
+              <h2>${tr("select")}</h2>
               <button type="button" data-close aria-label="Close">${ICONS.close}</button>
             </header>
             <div class="picker-list">
@@ -252,7 +303,7 @@ function passView(t) {
               }).join("")}
             </div>
             <div class="picker-foot">
-              <button type="button" class="picker-go" data-send ${picked.size === 0 ? "disabled" : ""}>${sent ? "Transferred" : "Transfer ticket"}</button>
+              <button type="button" class="picker-go" data-send ${picked.size === 0 ? "disabled" : ""}>${sent ? tr("transferred") : tr("transfer")}</button>
             </div>
           </div>`
         : "";
@@ -261,7 +312,7 @@ function passView(t) {
     <header class="pass-header">
       <a class="back" href="#/" aria-label="Volver">${ICONS.back}</a>
       <div>
-        <h1>Evento</h1>
+        <h1>${tr("event")}</h1>
         <p>${t.dateLabel} - ${t.venue}</p>
       </div>
       <button class="share-pass" type="button" data-transfer aria-label="Transferir">${ICONS.upload}</button>
@@ -272,19 +323,19 @@ function passView(t) {
       <div class="qr-row">
         ${QR}
         <div class="sector">
-          <p class="micro">Sector</p>
+          <p class="micro">${tr("sector")}</p>
           <p class="value">${t.section}</p>
-          <p class="micro access">Acceso</p>
+          <p class="micro access">${tr("access")}</p>
           <p class="value">${t.gate}</p>
-          <button class="mas-info" type="button" data-info>Más info</button>
+          <button class="mas-info" type="button" data-info>${tr("more")}</button>
         </div>
       </div>
       <div class="facts">
-        <div><p class="micro">Sección</p><p class="value">${t.passes[0].section}</p></div>
-        <div><p class="micro">Fila</p><p class="value">${t.row}</p></div>
-        <div><p class="micro">Asiento</p><p class="value">${t.passes[0].seat}</p></div>
-        <div><p class="micro">Apertura puertas</p><p class="value">${t.doors}</p></div>
-        <div><p class="micro">Inicio show</p><p class="value">${t.timeLabel} hs</p></div>
+        <div><p class="micro">${tr("section")}</p><p class="value">${t.passes[0].section}</p></div>
+        <div><p class="micro">${tr("row")}</p><p class="value">${t.row}</p></div>
+        <div><p class="micro">${tr("seat")}</p><p class="value">${t.passes[0].seat}</p></div>
+        <div><p class="micro">${tr("doors")}</p><p class="value">${t.doors}</p></div>
+        <div><p class="micro">${tr("start")}</p><p class="value">${t.timeLabel} hs</p></div>
       </div>
     </article>
     ${modal}
@@ -304,11 +355,11 @@ function notificationsView() {
     <div class="screen">
       <header class="screen-header">
         <a class="back" href="#/" aria-label="Back">${ICONS.back}</a>
-        <h1>Notifications</h1>
+        <h1>${tr("notifications")}</h1>
       </header>
       <div class="notify-empty">
         <div class="notify-bell">${ICONS.bell}</div>
-        <p>You don't have any notifications yet.</p>
+        <p>${tr("noNotes")}</p>
       </div>
     </div>
   `;
@@ -321,8 +372,8 @@ function accountView() {
   const help = helpOpen
     ? `<div class="overlay" data-help-close>
         <div class="sheet">
-          <div class="sheet-head"><h2>Need help?</h2><button type="button" data-help-close>Close</button></div>
-          <p>For ticket transfers or account issues, write from ${profile.email}. Your Quentro ID QR is on the first tab if someone needs to scan it.</p>
+          <div class="sheet-head"><h2>${tr("needHelp")}</h2><button type="button" data-help-close>${tr("close")}</button></div>
+          <p>${tr("helpBody")}</p>
         </div>
       </div>`
     : "";
@@ -331,13 +382,13 @@ function accountView() {
     <div class="screen">
       <header class="screen-header">
         <a class="back" href="#/" aria-label="Back">${ICONS.back}</a>
-        <h1>Account</h1>
+        <h1>${tr("account")}</h1>
         <button class="share-btn" type="button" data-share aria-label="Share Quentro ID">${ICONS.share}</button>
       </header>
-      ${copied ? `<p class="copied">Quentro ID copied</p>` : ""}
+      ${copied ? `<p class="copied">${tr("copied")}</p>` : ""}
       <div class="account-tabs">
         <button type="button" data-account-tab="id" class="${accountTab === "id" ? "active" : ""}">Quentro ID</button>
-        <button type="button" data-account-tab="settings" class="${accountTab === "settings" ? "active" : ""}">Settings</button>
+        <button type="button" data-account-tab="settings" class="${accountTab === "settings" ? "active" : ""}">${tr("settings")}</button>
       </div>
       ${
         accountTab === "id"
@@ -348,29 +399,36 @@ function accountView() {
                   <div class="id-meter"><span></span></div>
                 </div>
                 <h2>Quentro ID</h2>
-                <p>Show this QR code to transfer tickets to your account with a simple scan.</p>
+                <p>${tr("idCopy")}</p>
               </div>
             </div>`
           : `<div class="settings">
-              <h2>My Info</h2>
+              <h2>${tr("language")}</h2>
+              <div class="info-card">
+                <div class="info-row">
+                  <span>${lang === "es" ? "Español" : "English"}</span>
+                  <button type="button" class="pin-switch ${lang === "es" ? "on" : ""}" data-lang role="switch" aria-checked="${lang === "es"}" aria-label="${tr("language")}"><span></span></button>
+                </div>
+              </div>
+              <h2>${tr("myInfo")}</h2>
               <div class="info-card">
                 ${infoRow("email", profile.email)}
                 ${infoRow("name", profile.name, true)}
                 ${infoRow("country", `${flag}${escapeHtml(profile.country)}`, true, true)}
                 ${infoRow("dob", profile.dob, true)}
               </div>
-              <h2>Security</h2>
+              <h2>${tr("security")}</h2>
               <div class="info-card">
                 <div class="info-row">
-                  <span>Security PIN</span>
+                  <span>${tr("pin")}</span>
                   <button type="button" class="pin-switch ${profile.pinOn ? "on" : ""}" data-pin role="switch" aria-checked="${profile.pinOn}" aria-label="Security PIN"><span></span></button>
                 </div>
-                <p class="pin-copy">Secure your tickets with a PIN. We'll request it when transferring tickets, ensuring safety in case your device is lost or stolen.</p>
+                <p class="pin-copy">${tr("pinCopy")}</p>
               </div>
             </div>`
       }
       <div class="help-wrap">
-        <button type="button" class="help-btn" data-help>Need Help?</button>
+        <button type="button" class="help-btn" data-help>${tr("help")}</button>
       </div>
       ${help}
     </div>
@@ -401,6 +459,11 @@ function bindAccount() {
       helpOpen = false;
       render();
     });
+  });
+  document.querySelector("[data-lang]")?.addEventListener("click", () => {
+    lang = lang === "es" ? "en" : "es";
+    localStorage.setItem(LANG_KEY, lang);
+    render();
   });
   document.querySelector("[data-pin]")?.addEventListener("click", () => {
     saveProfile({ ...profile, pinOn: !profile.pinOn });
@@ -453,7 +516,7 @@ function bindAccount() {
   const form = document.querySelector("[data-edit-form]");
   if (form) {
     const commit = () => {
-      const value = new FormData(form).get("value");
+      const value = new FormData(form).getr("value");
       if (editing && String(value).trim()) {
         saveProfile({ ...profile, [editing]: String(value).trim() });
       }
@@ -513,7 +576,7 @@ function bindPass(ticket, root) {
 }
 
 document.addEventListener("click", (event) => {
-  const link = event.target.closest("a[href^='#/']");
+  const link = event.target.closestr("a[href^='#/']");
   if (!link) return;
   event.preventDefault();
   const hash = link.getAttribute("href");
