@@ -31,8 +31,8 @@ const TICKETS = [
     venue: "Estadio Único de La Plata",
     city: "La Plata, Argentina",
     month: "Octubre 2026",
-    image: "posters/argentina-arirang.jpg?v=2",
-    thumb: "posters/argentina-arirang-thumb.jpg?v=2",
+    image: "posters/argentina-arirang.jpg?v=3",
+    thumb: "posters/argentina-arirang-thumb.jpg?v=3",
     dateLabel: "Sáb, 24 oct 2026",
     timeLabel: "20:00",
     section: "Cabecera Norte",
@@ -265,7 +265,7 @@ function render() {
 function listView() {
   const cards = TICKETS.map((ticket) => `
     <a class="ticket-card" data-ticket-id="${ticket.id}" href="#/ticket/${ticket.id}" ${hidden.has(ticket.id) ? "hidden" : ""}>
-      <img src="${ticket.thumb}" alt="" width="800" height="800" decoding="async" />
+      <img src="${ticket.thumb}" alt="" width="92" height="92" decoding="async" />
       <div class="meta">
         <p><span class="qty" data-i18n="tickets">${tr("tickets")}</span> <span class="when" data-when="${ticket.id}">${lang === "es" ? ticket.whenEs : ticket.whenEn}</span></p>
         <h3>${ticket.title}</h3>
