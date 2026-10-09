@@ -1,9 +1,33 @@
 const TICKETS = [
   {
+    id: "lima-oct-10",
+    title: "BTS WORLD TOUR ARIRANG",
+    qty: 2,
+    whenEs: "sábado 10 20:00hs",
+    whenEn: "Saturday 10 8:00pm",
+    venue: "Estadio San Marcos",
+    city: "Lima, Perú",
+    month: "Octubre 2026",
+    image: "posters/lima-arirang.jpg",
+    thumb: "posters/lima-arirang-thumb.jpg",
+    dateLabel: "Sáb, 10 oct 2026",
+    timeLabel: "20:00",
+    section: "Tribuna Sur",
+    row: "20",
+    seat: "Consecutivos",
+    doors: "16:00 hs",
+    gate: "Puerta Sur",
+    passes: [
+      { sector: "Tribuna Sur", section: "TS", row: "20", seat: "14" },
+      { sector: "Tribuna Sur", section: "TS", row: "20", seat: "15" },
+    ],
+  },
+  {
     id: "laplata-oct-24",
     title: "BTS WORLD TOUR ARIRANG",
     qty: 2,
-    when: "sábado 24 20:00hs",
+    whenEs: "sábado 24 20:00hs",
+    whenEn: "Saturday 24 8:00pm",
     venue: "Estadio Único de La Plata",
     city: "La Plata, Argentina",
     month: "Octubre 2026",
@@ -13,7 +37,7 @@ const TICKETS = [
     timeLabel: "20:00",
     section: "Cabecera Norte",
     row: "19",
-    seat: "Asientos consecutivos 37",
+    seat: "37",
     doors: "16:00 hs",
     gate: "Puerta Norte",
     passes: [
@@ -68,6 +92,7 @@ const ICONS = {
   check: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg>`,
   share: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>`,
   pencil: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>`,
+  eye: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>`,
 };
 
 let tab = "upcoming";
@@ -81,8 +106,11 @@ const COPY = {
     myTickets: "My Tickets", upcoming: "Upcoming", past: "Past",
     noPastTitle: "No past tickets",
     noPast: "Tickets from shows you’ve already attended will show up here.",
-    month: "October 2026", when: "Saturday 24 8:00pm", tickets: "2 tickets",
+    month: "October 2026", tickets: "2 tickets",
     notifications: "Notifications", noNotes: "You don't have any notifications yet.",
+    hide: "Hide", unhide: "Show",
+    hideHint: "Tap a ticket to hide it. Tap it again to put it back.",
+    allHidden: "All tickets are hidden.",
     account: "Account", settings: "Settings", myInfo: "My Info", security: "Security",
     pin: "Security PIN",
     pinCopy: "Secure your tickets with a PIN. We'll request it when transferring tickets, ensuring safety in case your device is lost or stolen.",
@@ -99,8 +127,11 @@ const COPY = {
     myTickets: "Mis entradas", upcoming: "Próximos", past: "Pasados",
     noPastTitle: "No hay entradas pasadas",
     noPast: "Las entradas de shows a los que ya fuiste van a aparecer acá.",
-    month: "Octubre 2026", when: "sábado 24 20:00hs", tickets: "2 entradas",
+    month: "Octubre 2026", tickets: "2 entradas",
     notifications: "Notificaciones", noNotes: "Todavía no tenés notificaciones.",
+    hide: "Ocultar", unhide: "Mostrar",
+    hideHint: "Tocá una entrada para ocultarla. Tocála de nuevo para volver a verla.",
+    allHidden: "Todas las entradas están ocultas.",
     account: "Cuenta", settings: "Ajustes", myInfo: "Mis datos", security: "Seguridad",
     pin: "PIN de seguridad",
     pinCopy: "Protegé tus entradas con un PIN. Lo vamos a pedir al transferir, por si perdés el teléfono.",
@@ -115,6 +146,8 @@ const COPY = {
   },
 };
 function tr(key) { return COPY[lang][key]; }
+const HIDE_KEY = "quentro-hidden";
+let hidden = new Set(JSON.parse(localStorage.getItem(HIDE_KEY) || "[]"));
 let accountTab = "id";
 let editing = null;
 let helpOpen = false;
@@ -169,6 +202,7 @@ function render() {
     app.dataset.mounted = "1";
     panel("notifications").innerHTML = notificationsView();
     panel("notifications").dataset.lang = lang;
+    bindNotifications();
     for (const ticket of TICKETS) {
       const node = panel(`ticket-${ticket.id}`);
       node.innerHTML = passView(ticket);
@@ -186,12 +220,6 @@ function render() {
     list.dataset.tab = tab;
     list.dataset.lang = lang;
     bindList();
-  }
-
-  const notes = panel("notifications");
-  if (notes.dataset.lang !== lang) {
-    notes.innerHTML = notificationsView();
-    notes.dataset.lang = lang;
   }
 
   let active = "list";
@@ -225,37 +253,39 @@ function render() {
   document.querySelectorAll("[data-panel]").forEach((el) => {
     el.hidden = el.dataset.panel !== active;
   });
+  applyHidden();
 }
 
 function listView() {
   const cards = TICKETS.map((ticket) => `
-    <a class="ticket-card" href="#/ticket/${ticket.id}">
-      <img src="${ticket.thumb}" alt="" width="640" height="640" decoding="async" />
+    <a class="ticket-card" data-ticket-id="${ticket.id}" href="#/ticket/${ticket.id}" ${hidden.has(ticket.id) ? "hidden" : ""}>
+      <img src="${ticket.thumb}" alt="" width="800" height="800" decoding="async" />
       <div class="meta">
-        <p><span class="qty">${tr("tickets")}</span> <span class="when">${tr("when")}</span></p>
+        <p><span class="qty" data-i18n="tickets">${tr("tickets")}</span> <span class="when" data-when="${ticket.id}">${lang === "es" ? ticket.whenEs : ticket.whenEn}</span></p>
         <h3>${ticket.title}</h3>
         <p class="venue">${ticket.venue}</p>
       </div>
     </a>
   `).join("");
+  const anyVisible = TICKETS.some((ticket) => !hidden.has(ticket.id));
 
   return `
     <div class="list-page">
       <header class="list-header">
-        <h1>${tr("myTickets")}</h1>
+        <h1 data-i18n="myTickets">${tr("myTickets")}</h1>
         <div class="icon-row">
           <a class="icon-btn" href="#/notifications" aria-label="Notifications">${ICONS.bell}</a>
           <a class="icon-btn" href="#/account" aria-label="Account">${ICONS.user}</a>
         </div>
       </header>
       <div class="seg">
-        <button data-tab="upcoming" class="${tab === "upcoming" ? "active" : ""}">${tr("upcoming")}</button>
-        <button data-tab="past" class="past ${tab === "past" ? "active" : ""}">${tr("past")}</button>
+        <button data-tab="upcoming" class="${tab === "upcoming" ? "active" : ""}" data-i18n="upcoming">${tr("upcoming")}</button>
+        <button data-tab="past" class="past ${tab === "past" ? "active" : ""}" data-i18n="past">${tr("past")}</button>
       </div>
       ${
         tab === "past"
-          ? `<div class="empty"><h2>${tr("noPastTitle")}</h2><p>${tr("noPast")}</p></div>`
-          : `<section><h2 class="month">${tr("month")}</h2>${cards}</section>`
+          ? `<div class="empty"><h2 data-i18n="noPastTitle">${tr("noPastTitle")}</h2><p data-i18n="noPast">${tr("noPast")}</p></div>`
+          : `<section><h2 class="month" data-i18n="month">${tr("month")}</h2><p class="all-hidden" data-all-hidden data-i18n="allHidden" ${anyVisible ? "hidden" : ""}>${tr("allHidden")}</p>${cards}</section>`
       }
     </div>
   `;
@@ -333,7 +363,7 @@ function passView(t) {
       <div class="facts">
         <div><p class="micro">${tr("section")}</p><p class="value">${t.passes[0].section}</p></div>
         <div><p class="micro">${tr("row")}</p><p class="value">${t.row}</p></div>
-        <div><p class="micro">${tr("seat")}</p><p class="value">${t.passes[0].seat}</p></div>
+        <div><p class="micro" data-i18n="seat">${tr("seat")}</p><p class="value">${t.seat}</p></div>
         <div><p class="micro">${tr("doors")}</p><p class="value">${t.doors}</p></div>
         <div><p class="micro">${tr("start")}</p><p class="value">${t.timeLabel} hs</p></div>
       </div>
@@ -351,15 +381,27 @@ function notFound() {
 }
 
 function notificationsView() {
+  const rows = TICKETS.map((ticket) => `
+    <button type="button" class="hide-row ${hidden.has(ticket.id) ? "is-hidden" : ""}" data-hide-id="${ticket.id}">
+      <img src="${ticket.thumb}" alt="" width="80" height="80" />
+      <span><b>${ticket.title}</b><small>${ticket.dateLabel}</small></span>
+      <span class="tag" data-hide-label>${hidden.has(ticket.id) ? tr("unhide") : tr("hide")}</span>
+    </button>
+  `).join("");
   return `
     <div class="screen">
       <header class="screen-header">
         <a class="back" href="#/" aria-label="Back">${ICONS.back}</a>
-        <h1>${tr("notifications")}</h1>
+        <h1 data-i18n="notifications">${tr("notifications")}</h1>
+        <button class="hide-open" type="button" data-hide-open aria-label="${tr("hide")}">${ICONS.eye}</button>
       </header>
-      <div class="notify-empty">
+      <div class="notify-empty" data-notify-empty>
         <div class="notify-bell">${ICONS.bell}</div>
-        <p>${tr("noNotes")}</p>
+        <p data-i18n="noNotes">${tr("noNotes")}</p>
+      </div>
+      <div class="hide-list" data-hide-list hidden>
+        <p class="hide-hint" data-i18n="hideHint">${tr("hideHint")}</p>
+        ${rows}
       </div>
     </div>
   `;
@@ -382,13 +424,13 @@ function accountView() {
     <div class="screen">
       <header class="screen-header">
         <a class="back" href="#/" aria-label="Back">${ICONS.back}</a>
-        <h1>${tr("account")}</h1>
+        <h1 data-i18n="account">${tr("account")}</h1>
         <button class="share-btn" type="button" data-share aria-label="Share Quentro ID">${ICONS.share}</button>
       </header>
       ${copied ? `<p class="copied">${tr("copied")}</p>` : ""}
       <div class="account-tabs">
         <button type="button" data-account-tab="id" class="${accountTab === "id" ? "active" : ""}">Quentro ID</button>
-        <button type="button" data-account-tab="settings" class="${accountTab === "settings" ? "active" : ""}">${tr("settings")}</button>
+        <button type="button" data-account-tab="settings" class="${accountTab === "settings" ? "active" : ""}" data-i18n="settings">${tr("settings")}</button>
       </div>
       ${
         accountTab === "id"
@@ -399,36 +441,36 @@ function accountView() {
                   <div class="id-meter"><span></span></div>
                 </div>
                 <h2>Quentro ID</h2>
-                <p>${tr("idCopy")}</p>
+                <p data-i18n="idCopy">${tr("idCopy")}</p>
               </div>
             </div>`
           : `<div class="settings">
-              <h2>${tr("language")}</h2>
+              <h2 data-i18n="language">${tr("language")}</h2>
               <div class="info-card">
                 <div class="info-row">
-                  <span>${lang === "es" ? "Español" : "English"}</span>
+                  <span data-lang-name>${lang === "es" ? "Español" : "English"}</span>
                   <button type="button" class="pin-switch ${lang === "es" ? "on" : ""}" data-lang role="switch" aria-checked="${lang === "es"}" aria-label="${tr("language")}"><span></span></button>
                 </div>
               </div>
-              <h2>${tr("myInfo")}</h2>
+              <h2 data-i18n="myInfo">${tr("myInfo")}</h2>
               <div class="info-card">
                 ${infoRow("email", profile.email)}
                 ${infoRow("name", profile.name, true)}
                 ${infoRow("country", `${flag}${escapeHtml(profile.country)}`, true, true)}
                 ${infoRow("dob", profile.dob, true)}
               </div>
-              <h2>${tr("security")}</h2>
+              <h2 data-i18n="security">${tr("security")}</h2>
               <div class="info-card">
                 <div class="info-row">
-                  <span>${tr("pin")}</span>
+                  <span data-i18n="pin">${tr("pin")}</span>
                   <button type="button" class="pin-switch ${profile.pinOn ? "on" : ""}" data-pin role="switch" aria-checked="${profile.pinOn}" aria-label="Security PIN"><span></span></button>
                 </div>
-                <p class="pin-copy">${tr("pinCopy")}</p>
+                <p class="pin-copy" data-i18n="pinCopy">${tr("pinCopy")}</p>
               </div>
             </div>`
       }
       <div class="help-wrap">
-        <button type="button" class="help-btn" data-help>${tr("help")}</button>
+        <button type="button" class="help-btn" data-help data-i18n="help">${tr("help")}</button>
       </div>
       ${help}
     </div>
@@ -451,6 +493,66 @@ function infoRow(field, value, editable, html) {
   return `<div class="info-row">${shown}${pencil}</div>`;
 }
 
+function applyLang() {
+  document.querySelectorAll("[data-i18n]").forEach((el) => {
+    el.textContent = tr(el.dataset.i18n);
+  });
+  document.querySelectorAll("[data-when]").forEach((el) => {
+    const ticket = TICKETS.find((item) => item.id === el.dataset.when);
+    if (ticket) el.textContent = lang === "es" ? ticket.whenEs : ticket.whenEn;
+  });
+  document.querySelectorAll("[data-lang-name]").forEach((el) => {
+    el.textContent = lang === "es" ? "Español" : "English";
+  });
+  document.querySelectorAll("[data-lang]").forEach((btn) => {
+    btn.classList.toggle("on", lang === "es");
+    btn.setAttribute("aria-checked", String(lang === "es"));
+  });
+  const list = panel("list");
+  if (list) list.dataset.lang = lang;
+  const notes = panel("notifications");
+  if (notes) notes.dataset.lang = lang;
+  applyHidden();
+}
+
+function applyHidden() {
+  let shown = 0;
+  document.querySelectorAll(".ticket-card").forEach((card) => {
+    const off = hidden.has(card.dataset.ticketId);
+    card.hidden = off;
+    if (!off) shown += 1;
+  });
+  document.querySelectorAll("[data-all-hidden]").forEach((note) => {
+    note.hidden = shown > 0;
+  });
+  document.querySelectorAll("[data-hide-id]").forEach((row) => {
+    const off = hidden.has(row.dataset.hideId);
+    row.classList.toggle("is-hidden", off);
+    const label = row.querySelector("[data-hide-label]");
+    if (label) label.textContent = off ? tr("unhide") : tr("hide");
+  });
+}
+
+function bindNotifications() {
+  const root = panel("notifications");
+  root.querySelector("[data-hide-open]")?.addEventListener("click", () => {
+    const list = root.querySelector("[data-hide-list]");
+    const empty = root.querySelector("[data-notify-empty]");
+    const showList = list.hidden;
+    list.hidden = !showList;
+    empty.hidden = showList;
+  });
+  root.querySelectorAll("[data-hide-id]").forEach((row) => {
+    row.addEventListener("click", () => {
+      const id = row.dataset.hideId;
+      if (hidden.has(id)) hidden.delete(id);
+      else hidden.add(id);
+      localStorage.setItem(HIDE_KEY, JSON.stringify([...hidden]));
+      applyHidden();
+    });
+  });
+}
+
 function bindAccount() {
   document.querySelectorAll("[data-account-tab]").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -463,7 +565,7 @@ function bindAccount() {
   document.querySelector("[data-lang]")?.addEventListener("click", () => {
     lang = lang === "es" ? "en" : "es";
     localStorage.setItem(LANG_KEY, lang);
-    render();
+    applyLang();
   });
   document.querySelector("[data-pin]")?.addEventListener("click", () => {
     saveProfile({ ...profile, pinOn: !profile.pinOn });
@@ -516,7 +618,7 @@ function bindAccount() {
   const form = document.querySelector("[data-edit-form]");
   if (form) {
     const commit = () => {
-      const value = new FormData(form).getr("value");
+      const value = new FormData(form).get("value");
       if (editing && String(value).trim()) {
         saveProfile({ ...profile, [editing]: String(value).trim() });
       }
@@ -576,7 +678,7 @@ function bindPass(ticket, root) {
 }
 
 document.addEventListener("click", (event) => {
-  const link = event.target.closestr("a[href^='#/']");
+  const link = event.target.closest("a[href^='#/']");
   if (!link) return;
   event.preventDefault();
   const hash = link.getAttribute("href");
