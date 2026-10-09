@@ -594,8 +594,31 @@ button, a { touch-action: manipulation; }
   background: #fff;
   transition: transform .15s ease;
 }
-.pin-switch.on { background: #3dcec0; }
+.info-row .pin-switch {
+  display: block;
+  background: #3a4140;
+}
+.info-row .pin-switch.on { background: #3dcec0; }
 .pin-switch.on span { transform: translateX(20px); }
+.lang-picks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 0 0 22px;
+}
+.lang-picks button {
+  border: 0;
+  border-radius: 999px;
+  background: #1c2423;
+  color: #c5cbc9;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 12px 8px;
+}
+.lang-picks button.on {
+  background: #3dcec0;
+  color: #06211e;
+}
 .pin-copy {
   margin: 0;
   padding: 16px;

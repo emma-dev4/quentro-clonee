@@ -241,11 +241,17 @@ function render() {
     } else {
       active = `ticket-${r.id}`;
       const node = panel(active);
-      if (sheet || node.dataset.sheet || node.dataset.lang !== lang) {
-        node.innerHTML = passView(ticket);
+      if (!node.dataset.ready) {
+        node.innerHTML = `${passView(ticket)}<div data-sheet-slot></div>`;
         bindPass(ticket, node);
-        node.dataset.sheet = sheet ? "1" : "";
-        node.dataset.lang = lang;
+        node.dataset.ready = "1";
+      }
+      const slot = node.querySelector("[data-sheet-slot]");
+      const sheetKey = `${sheet || ""}:${[...picked].join(".")}:${sent ? 1 : 0}`;
+      if (slot && slot.dataset.open !== sheetKey) {
+        slot.innerHTML = sheetHtml(ticket);
+        slot.dataset.open = sheetKey;
+        bindSheet(ticket, slot);
       }
     }
   }
@@ -292,57 +298,11 @@ function listView() {
 }
 
 function passView(t) {
-  const modal =
-    sheet === "info"
-      ? `<div class="overlay" data-close>
-          <div class="sheet">
-            <div class="sheet-head"><h2>${tr("more")}</h2><button type="button" data-close>${tr("close")}</button></div>
-            <dl>
-              ${row(tr("event"), t.title)}
-              ${row("Fecha", t.dateLabel)}
-              ${row("Hora", t.timeLabel)}
-              ${row("Recinto", t.venue)}
-              ${row("Ciudad", t.city)}
-              ${row("Entradas", String(t.qty))}
-              ${row("Asiento", t.seat)}
-            </dl>
-          </div>
-        </div>`
-      : sheet === "transfer"
-        ? `<div class="picker">
-            <header class="picker-head">
-              <h2>${tr("select")}</h2>
-              <button type="button" data-close aria-label="Close">${ICONS.close}</button>
-            </header>
-            <div class="picker-list">
-              ${t.passes.map((pass) => {
-                const on = picked.has(pass.seat);
-                return `<button type="button" class="pick ${on ? "on" : ""}" data-pick="${pass.seat}">
-                  <span class="pick-box">${on ? ICONS.check : ""}</span>
-                  <span class="pick-card">
-                    <span class="pick-kicker">Sector</span>
-                    <span class="pick-name">${pass.sector}</span>
-                    <span class="pick-line"></span>
-                    <span class="pick-bits">
-                      <span><span class="pick-kicker">Section</span><b>${pass.section}</b></span>
-                      <span><span class="pick-kicker">Row</span><b>${pass.row}</b></span>
-                      <span><span class="pick-kicker">Seat</span><b>${pass.seat}</b></span>
-                    </span>
-                  </span>
-                </button>`;
-              }).join("")}
-            </div>
-            <div class="picker-foot">
-              <button type="button" class="picker-go" data-send ${picked.size === 0 ? "disabled" : ""}>${sent ? tr("transferred") : tr("transfer")}</button>
-            </div>
-          </div>`
-        : "";
-
   return `
     <header class="pass-header">
       <a class="back" href="#/" aria-label="Volver">${ICONS.back}</a>
       <div>
-        <h1>${tr("event")}</h1>
+        <h1 data-i18n="event">${tr("event")}</h1>
         <p>${t.dateLabel} - ${t.venue}</p>
       </div>
       <button class="share-pass" type="button" data-transfer aria-label="Transferir">${ICONS.upload}</button>
@@ -353,23 +313,71 @@ function passView(t) {
       <div class="qr-row">
         ${QR}
         <div class="sector">
-          <p class="micro">${tr("sector")}</p>
+          <p class="micro" data-i18n="sector">${tr("sector")}</p>
           <p class="value">${t.section}</p>
-          <p class="micro access">${tr("access")}</p>
+          <p class="micro access" data-i18n="access">${tr("access")}</p>
           <p class="value">${t.gate}</p>
-          <button class="mas-info" type="button" data-info>${tr("more")}</button>
+          <button class="mas-info" type="button" data-info data-i18n="more">${tr("more")}</button>
         </div>
       </div>
       <div class="facts">
-        <div><p class="micro">${tr("section")}</p><p class="value">${t.passes[0].section}</p></div>
-        <div><p class="micro">${tr("row")}</p><p class="value">${t.row}</p></div>
+        <div><p class="micro" data-i18n="section">${tr("section")}</p><p class="value">${t.passes[0].section}</p></div>
+        <div><p class="micro" data-i18n="row">${tr("row")}</p><p class="value">${t.row}</p></div>
         <div><p class="micro" data-i18n="seat">${tr("seat")}</p><p class="value">${t.seat}</p></div>
-        <div><p class="micro">${tr("doors")}</p><p class="value">${t.doors}</p></div>
-        <div><p class="micro">${tr("start")}</p><p class="value">${t.timeLabel} hs</p></div>
+        <div><p class="micro" data-i18n="doors">${tr("doors")}</p><p class="value">${t.doors}</p></div>
+        <div><p class="micro" data-i18n="start">${tr("start")}</p><p class="value">${t.timeLabel} hs</p></div>
       </div>
     </article>
-    ${modal}
   `;
+}
+
+function sheetHtml(t) {
+  if (sheet === "info") {
+    return `<div class="overlay" data-close>
+      <div class="sheet">
+        <div class="sheet-head"><h2 data-i18n="more">${tr("more")}</h2><button type="button" data-close data-i18n="close">${tr("close")}</button></div>
+        <dl>
+          ${row(tr("event"), t.title)}
+          ${row(lang === "es" ? "Fecha" : "Date", t.dateLabel)}
+          ${row(lang === "es" ? "Hora" : "Time", t.timeLabel)}
+          ${row(lang === "es" ? "Recinto" : "Venue", t.venue)}
+          ${row(lang === "es" ? "Ciudad" : "City", t.city)}
+          ${row(lang === "es" ? "Entradas" : "Tickets", String(t.qty))}
+          ${row(tr("seat"), t.seat)}
+        </dl>
+      </div>
+    </div>`;
+  }
+  if (sheet === "transfer") {
+    return `<div class="picker">
+      <header class="picker-head">
+        <h2 data-i18n="select">${tr("select")}</h2>
+        <button type="button" data-close aria-label="Close">${ICONS.close}</button>
+      </header>
+      <div class="picker-list">
+        ${t.passes.map((pass) => {
+          const on = picked.has(pass.seat);
+          return `<button type="button" class="pick ${on ? "on" : ""}" data-pick="${pass.seat}">
+            <span class="pick-box">${on ? ICONS.check : ""}</span>
+            <span class="pick-card">
+              <span class="pick-kicker" data-i18n="sector">${tr("sector")}</span>
+              <span class="pick-name">${pass.sector}</span>
+              <span class="pick-line"></span>
+              <span class="pick-bits">
+                <span><span class="pick-kicker" data-i18n="section">${tr("section")}</span><b>${pass.section}</b></span>
+                <span><span class="pick-kicker" data-i18n="row">${tr("row")}</span><b>${pass.row}</b></span>
+                <span><span class="pick-kicker" data-i18n="seat">${tr("seat")}</span><b>${pass.seat}</b></span>
+              </span>
+            </span>
+          </button>`;
+        }).join("")}
+      </div>
+      <div class="picker-foot">
+        <button type="button" class="picker-go" data-send ${picked.size === 0 ? "disabled" : ""} data-i18n="${sent ? "transferred" : "transfer"}">${sent ? tr("transferred") : tr("transfer")}</button>
+      </div>
+    </div>`;
+  }
+  return "";
 }
 
 function row(label, value) {
@@ -446,11 +454,9 @@ function accountView() {
             </div>`
           : `<div class="settings">
               <h2 data-i18n="language">${tr("language")}</h2>
-              <div class="info-card">
-                <div class="info-row">
-                  <span data-lang-name>${lang === "es" ? "Español" : "English"}</span>
-                  <button type="button" class="pin-switch ${lang === "es" ? "on" : ""}" data-lang role="switch" aria-checked="${lang === "es"}" aria-label="${tr("language")}"><span></span></button>
-                </div>
+              <div class="lang-picks">
+                <button type="button" data-set-lang="en" class="${lang === "en" ? "on" : ""}">English</button>
+                <button type="button" data-set-lang="es" class="${lang === "es" ? "on" : ""}">Español</button>
               </div>
               <h2 data-i18n="myInfo">${tr("myInfo")}</h2>
               <div class="info-card">
@@ -501,12 +507,8 @@ function applyLang() {
     const ticket = TICKETS.find((item) => item.id === el.dataset.when);
     if (ticket) el.textContent = lang === "es" ? ticket.whenEs : ticket.whenEn;
   });
-  document.querySelectorAll("[data-lang-name]").forEach((el) => {
-    el.textContent = lang === "es" ? "Español" : "English";
-  });
-  document.querySelectorAll("[data-lang]").forEach((btn) => {
-    btn.classList.toggle("on", lang === "es");
-    btn.setAttribute("aria-checked", String(lang === "es"));
+  document.querySelectorAll("[data-set-lang]").forEach((btn) => {
+    btn.classList.toggle("on", btn.getAttribute("data-set-lang") === lang);
   });
   const list = panel("list");
   if (list) list.dataset.lang = lang;
@@ -561,11 +563,6 @@ function bindAccount() {
       helpOpen = false;
       render();
     });
-  });
-  document.querySelector("[data-lang]")?.addEventListener("click", () => {
-    lang = lang === "es" ? "en" : "es";
-    localStorage.setItem(LANG_KEY, lang);
-    applyLang();
   });
   document.querySelector("[data-pin]")?.addEventListener("click", () => {
     saveProfile({ ...profile, pinOn: !profile.pinOn });
@@ -642,6 +639,30 @@ function bindList() {
   });
 }
 
+function bindSheet(ticket, slot) {
+  slot.querySelectorAll("[data-pick]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const seat = btn.getAttribute("data-pick");
+      if (picked.has(seat)) picked.delete(seat);
+      else picked.add(seat);
+      render();
+    });
+  });
+  slot.querySelector("[data-send]")?.addEventListener("click", () => {
+    if (picked.size === 0) return;
+    sent = true;
+    render();
+  });
+  slot.querySelectorAll("[data-close]").forEach((el) => {
+    el.addEventListener("click", (e) => {
+      if (el.classList.contains("overlay") && e.target !== el) return;
+      sheet = null;
+      render();
+    });
+  });
+  slot.querySelector(".sheet")?.addEventListener("click", (e) => e.stopPropagation());
+}
+
 function bindPass(ticket, root) {
   if (!ticket || !root) return;
   root.querySelector("[data-info]")?.addEventListener("click", () => {
@@ -654,30 +675,19 @@ function bindPass(ticket, root) {
     sheet = "transfer";
     render();
   });
-  root.querySelectorAll("[data-pick]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const seat = btn.getAttribute("data-pick");
-      if (picked.has(seat)) picked.delete(seat);
-      else picked.add(seat);
-      render();
-    });
-  });
-  root.querySelector("[data-send]")?.addEventListener("click", () => {
-    if (picked.size === 0) return;
-    sent = true;
-    render();
-  });
-  root.querySelectorAll("[data-close]").forEach((el) => {
-    el.addEventListener("click", (e) => {
-      if (el.classList.contains("overlay") && e.target !== el) return;
-      sheet = null;
-      render();
-    });
-  });
-  root.querySelector(".sheet")?.addEventListener("click", (e) => e.stopPropagation());
 }
 
 document.addEventListener("click", (event) => {
+  const langBtn = event.target.closest("[data-set-lang]");
+  if (langBtn) {
+    const next = langBtn.getAttribute("data-set-lang");
+    if (next && next !== lang) {
+      lang = next;
+      localStorage.setItem(LANG_KEY, lang);
+      applyLang();
+    }
+    return;
+  }
   const link = event.target.closest("a[href^='#/']");
   if (!link) return;
   event.preventDefault();
