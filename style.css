@@ -277,8 +277,8 @@ a { color: inherit; text-decoration: none; }
   color: var(--paper-fg);
 }
 .pass-photo {
-  height: 300px;
-  background: #e7e7e7;
+  height: 196px;
+  background: #111;
   position: relative;
 }
 .pass-photo img {
@@ -286,8 +286,8 @@ a { color: inherit; text-decoration: none; }
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  object-position: center;
+  object-fit: cover;
+  object-position: center 42%;
 }
 .accent-bar {
   height: 4px;
