@@ -1,7 +1,7 @@
 const TICKETS = [
   {
     id: "lima-oct-10",
-    title: "BTS WORLD TOUR ARIRANG",
+    title: "BTS - World Tour ARIRANG",
     qty: 2,
     whenEs: "sábado 10 20:00hs",
     whenEn: "Saturday 10 8:00pm",
@@ -23,8 +23,54 @@ const TICKETS = [
     ],
   },
   {
+    id: "santiago-oct-14",
+    title: "BTS - World Tour ARIRANG",
+    qty: 2,
+    whenEs: "miércoles 14 20:00hs",
+    whenEn: "Wednesday 14 8:00pm",
+    venue: "Estadio Nacional Julio Martínez Prádanos",
+    city: "Santiago, Chile",
+    month: "Octubre 2026",
+    image: "posters/santiago-arirang.jpg?v=1",
+    thumb: "posters/santiago-arirang-thumb.jpg?v=1",
+    dateLabel: "Mié, 14 oct 2026",
+    timeLabel: "20:00",
+    section: "Cancha Pacífico",
+    row: "Sin numerar",
+    seat: "Sin numerar",
+    doors: "16:00 hs",
+    gate: "Acceso Cancha",
+    passes: [
+      { sector: "Cancha Pacífico", section: "CP", row: "S/N", seat: "1" },
+      { sector: "Cancha Pacífico", section: "CP", row: "S/N", seat: "2" },
+    ],
+  },
+  {
+    id: "santiago-oct-17",
+    title: "BTS - World Tour ARIRANG",
+    qty: 2,
+    whenEs: "sábado 17 20:00hs",
+    whenEn: "Saturday 17 8:00pm",
+    venue: "Estadio Nacional Julio Martínez Prádanos",
+    city: "Santiago, Chile",
+    month: "Octubre 2026",
+    image: "posters/santiago-arirang.jpg?v=1",
+    thumb: "posters/santiago-arirang-thumb.jpg?v=1",
+    dateLabel: "Sáb, 17 oct 2026",
+    timeLabel: "20:00",
+    section: "Cancha Andes",
+    row: "Sin numerar",
+    seat: "Sin numerar",
+    doors: "16:00 hs",
+    gate: "Acceso Cancha",
+    passes: [
+      { sector: "Cancha Andes", section: "CA", row: "S/N", seat: "1" },
+      { sector: "Cancha Andes", section: "CA", row: "S/N", seat: "2" },
+    ],
+  },
+  {
     id: "laplata-oct-24",
-    title: "BTS WORLD TOUR ARIRANG",
+    title: "BTS - World Tour ARIRANG",
     qty: 2,
     whenEs: "sábado 24 20:00hs",
     whenEn: "Saturday 24 8:00pm",
@@ -124,7 +170,7 @@ const COPY = {
     language: "Language",
   },
   es: {
-    myTickets: "Mis entradas", upcoming: "Próximos", past: "Pasados",
+    myTickets: "Mis Entradas", upcoming: "Próximos", past: "Pasados",
     noPastTitle: "No hay entradas pasadas",
     noPast: "Las entradas de shows a los que ya fuiste van a aparecer acá.",
     month: "Octubre 2026", tickets: "2 entradas",
@@ -265,7 +311,7 @@ function render() {
 function listView() {
   const cards = TICKETS.map((ticket) => `
     <a class="ticket-card" data-ticket-id="${ticket.id}" href="#/ticket/${ticket.id}" ${hidden.has(ticket.id) ? "hidden" : ""}>
-      <img src="${ticket.thumb}" alt="" width="92" height="92" decoding="async" />
+      <img src="${ticket.thumb}" alt="" width="112" height="112" decoding="async" />
       <div class="meta">
         <p><span class="qty" data-i18n="tickets">${tr("tickets")}</span> <span class="when" data-when="${ticket.id}">${lang === "es" ? ticket.whenEs : ticket.whenEn}</span></p>
         <h3>${ticket.title}</h3>
