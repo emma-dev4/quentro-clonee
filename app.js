@@ -36,13 +36,13 @@ const TICKETS = [
     dateLabel: "Mié, 14 oct 2026",
     timeLabel: "20:00",
     section: "Cancha Pacífico",
-    row: "Sin numerar",
-    seat: "Sin numerar",
+    row: "no assigned row",
+    seat: "no assigned seats",
     doors: "16:00 hs",
     gate: "Acceso Cancha",
     passes: [
-      { sector: "Cancha Pacífico", section: "CP", row: "S/N", seat: "1" },
-      { sector: "Cancha Pacífico", section: "CP", row: "S/N", seat: "2" },
+      { sector: "Cancha Pacífico", section: "CP", row: "no assigned row", seat: "no assigned seats" },
+      { sector: "Cancha Pacífico", section: "CP", row: "no assigned row", seat: "no assigned seats" },
     ],
   },
   {
@@ -59,13 +59,13 @@ const TICKETS = [
     dateLabel: "Sáb, 17 oct 2026",
     timeLabel: "20:00",
     section: "Cancha Andes",
-    row: "Sin numerar",
-    seat: "Sin numerar",
+    row: "no assigned row",
+    seat: "no assigned seats",
     doors: "16:00 hs",
     gate: "Acceso Cancha",
     passes: [
-      { sector: "Cancha Andes", section: "CA", row: "S/N", seat: "1" },
-      { sector: "Cancha Andes", section: "CA", row: "S/N", seat: "2" },
+      { sector: "Cancha Andes", section: "CA", row: "no assigned row", seat: "no assigned seats" },
+      { sector: "Cancha Andes", section: "CA", row: "no assigned row", seat: "no assigned seats" },
     ],
   },
   {
@@ -401,9 +401,10 @@ function sheetHtml(t) {
         <button type="button" data-close aria-label="Close">${ICONS.close}</button>
       </header>
       <div class="picker-list">
-        ${t.passes.map((pass) => {
-          const on = picked.has(pass.seat);
-          return `<button type="button" class="pick ${on ? "on" : ""}" data-pick="${pass.seat}">
+        ${t.passes.map((pass, i) => {
+          const key = String(i);
+          const on = picked.has(key);
+          return `<button type="button" class="pick ${on ? "on" : ""}" data-pick="${key}">
             <span class="pick-box">${on ? ICONS.check : ""}</span>
             <span class="pick-card">
               <span class="pick-kicker" data-i18n="sector">${tr("sector")}</span>
@@ -717,7 +718,7 @@ function bindPass(ticket, root) {
   });
   root.querySelector("[data-transfer]")?.addEventListener("click", () => {
     sent = false;
-    picked = new Set([ticket.passes[0].seat]);
+    picked = new Set(["0"]);
     sheet = "transfer";
     render();
   });
