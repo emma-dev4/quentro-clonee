@@ -99,8 +99,11 @@ a { color: inherit; text-decoration: none; }
 }
 .ticket-card img {
   width: 112px;
-  height: 112px;
+  height: 100%;
+  min-height: 112px;
   flex: none;
+  align-self: stretch;
+  aspect-ratio: auto;
   object-fit: cover;
   object-position: center;
   border-radius: 14px;
@@ -109,22 +112,25 @@ a { color: inherit; text-decoration: none; }
 .ticket-card .meta {
   flex: 1;
   min-width: 0;
-  height: 112px;
+  min-height: 112px;
+  height: auto;
   background: var(--surface);
   border-radius: 16px;
   padding: 12px 14px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 2px;
+  gap: 3px;
 }
 .qty { color: var(--accent); font-weight: 600; font-size: 13px; }
 .when { color: var(--muted); font-weight: 500; font-size: 13px; }
 .ticket-card .meta > p:first-child { white-space: nowrap; }
 .ticket-card h3 {
   margin: 0;
+  flex: none;
   font-size: 17px;
   font-weight: 700;
+  line-height: 1.25;
   letter-spacing: -0.03em;
   white-space: nowrap;
   overflow: hidden;
@@ -132,9 +138,10 @@ a { color: inherit; text-decoration: none; }
 }
 .venue {
   margin: 0;
+  flex: none;
   color: var(--muted);
   font-size: 14px;
-  line-height: 1.25;
+  line-height: 1.3;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
