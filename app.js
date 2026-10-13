@@ -349,7 +349,7 @@ function passView(t) {
       <a class="back" href="#/" aria-label="Volver">${ICONS.back}</a>
       <div>
         <h1 data-i18n="event">${tr("event")}</h1>
-        <p>${t.dateLabel} - ${t.venue}</p>
+        <p class="pass-sub">${t.dateLabel}<span>${t.venue}</span></p>
       </div>
       <button class="share-pass" type="button" data-transfer aria-label="Transferir">${ICONS.upload}</button>
     </header>
