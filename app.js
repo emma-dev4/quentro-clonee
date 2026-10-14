@@ -38,13 +38,13 @@ const TICKETS = [
     dateLabel: "Mié, 14 oct 2026",
     timeLabel: "20:00",
     section: "Cancha Pacífico",
-    row: "no assigned row",
-    seat: "no assigned seats",
+    row: "Sin fila asignada",
+    seat: "Sin asiento asignado",
     doors: "16:00 hs",
     gate: "Acceso Cancha",
     passes: [
-      { sector: "Cancha Pacífico", section: "CP", row: "no assigned row", seat: "no assigned seats" },
-      { sector: "Cancha Pacífico", section: "CP", row: "no assigned row", seat: "no assigned seats" },
+      { sector: "Cancha Pacífico", section: "CP", row: "Sin fila asignada", seat: "Sin asiento asignado" },
+      { sector: "Cancha Pacífico", section: "CP", row: "Sin fila asignada", seat: "Sin asiento asignado" },
     ],
   },
   {
@@ -62,13 +62,13 @@ const TICKETS = [
     dateLabel: "Sáb, 17 oct 2026",
     timeLabel: "20:00",
     section: "Cancha Andes",
-    row: "no assigned row",
-    seat: "no assigned seats",
+    row: "Sin fila asignada",
+    seat: "Sin asiento asignado",
     doors: "16:00 hs",
     gate: "Acceso Cancha",
     passes: [
-      { sector: "Cancha Andes", section: "CA", row: "no assigned row", seat: "no assigned seats" },
-      { sector: "Cancha Andes", section: "CA", row: "no assigned row", seat: "no assigned seats" },
+      { sector: "Cancha Andes", section: "CA", row: "Sin fila asignada", seat: "Sin asiento asignado" },
+      { sector: "Cancha Andes", section: "CA", row: "Sin fila asignada", seat: "Sin asiento asignado" },
     ],
   },
   {
@@ -93,6 +93,29 @@ const TICKETS = [
     passes: [
       { sector: "Cabecera Norte", section: "CN", row: "19", seat: "37" },
       { sector: "Cabecera Norte", section: "CN", row: "19", seat: "38" },
+    ],
+  },
+  {
+    id: "laplata-oct-24-campo",
+    title: "BTS - World Tour ARIRANG",
+    qty: 1,
+    whenEs: "sábado 24 20:00hs",
+    whenEn: "Saturday 24 8:00pm",
+    venue: "Estadio Único de La Plata",
+    city: "La Plata, Argentina",
+    month: "Octubre 2026",
+    image: "posters/argentina-arirang.jpg?v=3",
+    thumb: "posters/argentina-arirang-thumb.jpg?v=3",
+    qr: "qrs/laplata-oct-24-campo.png",
+    dateLabel: "Sáb, 24 oct 2026",
+    timeLabel: "20:00",
+    section: "Campo",
+    row: "Sin fila asignada",
+    seat: "Sin asiento asignado",
+    doors: "16:00 hs",
+    gate: "Acceso Campo",
+    passes: [
+      { sector: "Campo", section: "Campo", row: "Sin fila asignada", seat: "Sin asiento asignado" },
     ],
   },
 ];
@@ -288,6 +311,7 @@ function render() {
     active = "mail";
     const mail = panel("mail");
     mail.innerHTML = mailView();
+    bindMail();
   }
   if (r.name === "ticket") {
     const ticket = TICKETS.find((t) => t.id === r.id);
@@ -319,6 +343,7 @@ function render() {
     el.hidden = el.dataset.panel !== active;
   });
   applyHidden();
+  fitVenues();
 }
 
 function listView() {
@@ -326,7 +351,7 @@ function listView() {
     <a class="ticket-card" data-ticket-id="${ticket.id}" href="#/ticket/${ticket.id}" ${hidden.has(ticket.id) ? "hidden" : ""}>
       <img src="${ticket.thumb}" alt="" width="112" height="112" decoding="async" />
       <div class="meta">
-        <p><span class="qty" data-i18n="tickets">${tr("tickets")}</span> <span class="when" data-when="${ticket.id}">${lang === "es" ? ticket.whenEs : ticket.whenEn}</span></p>
+        <p><span class="qty" data-qty="${ticket.id}">${qtyLabel(ticket)}</span> <span class="when" data-when="${ticket.id}">${lang === "es" ? ticket.whenEs : ticket.whenEn}</span></p>
         <h3>${ticket.title}</h3>
         <p class="venue">${ticket.venue}</p>
       </div>
@@ -478,76 +503,144 @@ function notificationsView() {
   `;
 }
 
+function qtyLabel(ticket) {
+  const n = ticket.qty;
+  if (lang === "es") return n === 1 ? "1 entrada" : `${n} entradas`;
+  return n === 1 ? "1 ticket" : `${n} tickets`;
+}
+
+function fitVenues() {
+  document.querySelectorAll(".venue").forEach((el) => {
+    el.style.fontSize = "13px";
+    let size = 13;
+    while (el.scrollWidth > el.clientWidth + 1 && size > 8) {
+      size -= 0.5;
+      el.style.fontSize = `${size}px`;
+    }
+  });
+}
+
+let mailIndex = 0;
+
 function mailView() {
   const es = lang === "es";
   const name = escapeHtml(profile.name);
   const email = escapeHtml(profile.email);
-  const hello = es ? `Hola ${name},` : `Hi ${name},`;
-  const lead = es
-    ? "Tu compra fue confirmada. Las entradas ya están disponibles en Quentro. Guardá este correo como comprobante."
-    : "Your purchase is confirmed. The tickets are already available in Quentro. Keep this email as your receipt.";
-  const line = (label, value, total) => `<tr class="${total ? "total" : ""}"><td>${label}</td><td>${value}</td></tr>`;
-  const card = (kind, from, address, date, subject, rows, order) => `
-    <article class="mail">
-      <div class="mail-top">
+  const page = (kind, from, address, date, rows, order) => `
+    <section class="gmail-page">
+      <h2>${es ? "Confirmación de compra" : "Purchase confirmation"}</h2>
+      <div class="gmail-from">
         <div class="mail-avatar ${kind}">${kind === "aa" ? "AA" : "TM"}</div>
-        <div><b>${from}</b><small>${address}</small></div>
+        <div>
+          <b>${from}</b>
+          <small>${address}</small>
+          <small>${es ? "para" : "to"} ${name} <${email}></small>
+        </div>
         <time>${date}</time>
       </div>
-      <h2>${subject}</h2>
-      <p class="mail-to">${es ? "Para" : "To"}: ${name} <${email}></p>
-      <p>${hello}</p>
-      <p>${lead}</p>
+      <p class="gmail-lead">${es ? `Hola ${name}, tu compra fue confirmada. Las entradas ya están en Quentro.` : `Hi ${name}, your purchase is confirmed. The tickets are already in Quentro.`}</p>
       <table class="receipt">${rows}</table>
       <p class="mail-order">${es ? "Orden" : "Order"} ${order}</p>
-    </article>`;
-  const ar = card(
-    "aa",
-    "All Access",
-    "confirmacion@allaccess.com.ar",
-    es ? "10 abr 2026" : "Apr 10, 2026",
-    es ? "Confirmación de compra · BTS WORLD TOUR ARIRANG" : "Purchase confirmation · BTS WORLD TOUR ARIRANG",
-    [
-      line(es ? "Evento" : "Event", "BTS WORLD TOUR ARIRANG"),
-      line(es ? "Fecha" : "Date", es ? "Sábado 24 oct 2026 · 20:00" : "Saturday Oct 24, 2026 · 8:00pm"),
-      line(es ? "Recinto" : "Venue", "Estadio Único de La Plata"),
-      line(es ? "Sección" : "Section", "Cabecera Norte"),
-      line(es ? "Fila" : "Row", "19"),
-      line(es ? "Asientos" : "Seats", "37, 38"),
-      line(es ? "Cantidad" : "Quantity", "2"),
-      line(es ? "Precio" : "Price", es ? "$ 225.000 c/u" : "$225,000 each"),
-      line(es ? "Cargo por servicio 15%" : "Service fee 15%", es ? "$ 67.500" : "$67,500"),
-      line("Total", es ? "$ 517.500" : "$517,500", true),
-    ].join(""),
-    "AA-18442391",
-  );
-  const pe = card(
-    "tm",
-    "Ticketmaster",
-    "confirmacion@ticketmaster.pe",
-    es ? "10 abr 2026" : "Apr 10, 2026",
-    es ? "Confirmación de compra · BTS WORLD TOUR ARIRANG" : "Purchase confirmation · BTS WORLD TOUR ARIRANG",
-    [
-      line(es ? "Evento" : "Event", "BTS WORLD TOUR ARIRANG"),
-      line(es ? "Fecha" : "Date", es ? "Sábado 10 oct 2026 · 20:00" : "Saturday Oct 10, 2026 · 8:00pm"),
-      line(es ? "Recinto" : "Venue", "Estadio San Marcos, Lima"),
-      line(es ? "Sección" : "Section", "Tribuna Sur"),
-      line(es ? "Fila" : "Row", "20"),
-      line(es ? "Asientos" : "Seats", "14, 15"),
-      line(es ? "Cantidad" : "Quantity", "2"),
-      line(es ? "Precio" : "Price", "S/ 483.00 c/u"),
-      line("Total", "S/ 966.00", true),
-    ].join(""),
-    "TM-PE-55219084",
-  );
+    </section>`;
+  const line = (label, value, total) => `<tr class="${total ? "total" : ""}"><td>${label}</td><td>${value}</td></tr>`;
+  const pages = [
+    page(
+      "aa",
+      "All Access",
+      "confirmacion@allaccess.com.ar",
+      es ? "10 abr" : "Apr 10",
+      [
+        line(es ? "Evento" : "Event", "BTS WORLD TOUR ARIRANG"),
+        line(es ? "Fecha" : "Date", es ? "Sáb 24 oct 2026 · 20:00" : "Sat Oct 24, 2026 · 8:00pm"),
+        line(es ? "Recinto" : "Venue", "Estadio Único de La Plata"),
+        line(es ? "Sección" : "Section", "Cabecera Norte"),
+        line(es ? "Fila" : "Row", "19"),
+        line(es ? "Asientos" : "Seats", "37, 38"),
+        line(es ? "Entradas" : "Tickets", "2"),
+        line(es ? "Precio" : "Price", es ? "$ 225.000 c/u" : "$225,000 each"),
+        line(es ? "Servicio 15%" : "Service 15%", es ? "$ 67.500" : "$67,500"),
+        line("Total", es ? "$ 517.500" : "$517,500", true),
+      ].join(""),
+      "AA-18442391",
+    ),
+    page(
+      "aa",
+      "All Access",
+      "confirmacion@allaccess.com.ar",
+      es ? "10 abr" : "Apr 10",
+      [
+        line(es ? "Evento" : "Event", "BTS WORLD TOUR ARIRANG"),
+        line(es ? "Fecha" : "Date", es ? "Sáb 24 oct 2026 · 20:00" : "Sat Oct 24, 2026 · 8:00pm"),
+        line(es ? "Recinto" : "Venue", "Estadio Único de La Plata"),
+        line(es ? "Sección" : "Section", "Campo"),
+        line(es ? "Fila" : "Row", "Sin fila asignada"),
+        line(es ? "Asiento" : "Seat", "Sin asiento asignado"),
+        line(es ? "Tipo" : "Type", es ? "De pie" : "Standing"),
+        line(es ? "Entradas" : "Tickets", "1"),
+        line(es ? "Precio" : "Price", es ? "$ 355.000" : "$355,000"),
+        line(es ? "Servicio 15%" : "Service 15%", es ? "$ 53.250" : "$53,250"),
+        line("Total", es ? "$ 408.250" : "$408,250", true),
+      ].join(""),
+      "AA-18442906",
+    ),
+    page(
+      "tm",
+      "Ticketmaster",
+      "confirmacion@ticketmaster.pe",
+      es ? "10 abr" : "Apr 10",
+      [
+        line(es ? "Evento" : "Event", "BTS WORLD TOUR ARIRANG"),
+        line(es ? "Fecha" : "Date", es ? "Sáb 10 oct 2026 · 20:00" : "Sat Oct 10, 2026 · 8:00pm"),
+        line(es ? "Recinto" : "Venue", "Estadio San Marcos"),
+        line(es ? "Sección" : "Section", "Tribuna Sur"),
+        line(es ? "Fila" : "Row", "20"),
+        line(es ? "Asientos" : "Seats", "14, 15"),
+        line(es ? "Entradas" : "Tickets", "2"),
+        line(es ? "Precio" : "Price", "S/ 483.00 c/u"),
+        line("Total", "S/ 966.00", true),
+      ].join(""),
+      "TM-PE-55219084",
+    ),
+  ];
   return `
-    <div class="mail-screen">
-      <header class="screen-header">
+    <div class="gmail" data-gmail>
+      <header class="gmail-bar">
         <a class="back" href="#/account" aria-label="Back">${ICONS.back}</a>
-        <h1 data-i18n="purchase">${tr("purchase")}</h1>
+        <span class="gmail-count">${mailIndex + 1} / ${pages.length}</span>
       </header>
-      <div class="mail-scroll">${ar}${pe}</div>
+      <div class="gmail-viewport">
+        <div class="gmail-track" data-track>${pages.join("")}</div>
+      </div>
+      <div class="gmail-dots">${pages.map((_, i) => `<span data-dot class="${i === mailIndex ? "on" : ""}"></span>`).join("")}</div>
     </div>`;
+}
+
+function bindMail() {
+  const root = panel("mail");
+  const track = root.querySelector("[data-track]");
+  const pages = track.children.length;
+  const go = (index) => {
+    mailIndex = Math.max(0, Math.min(pages - 1, index));
+    track.style.transform = `translateX(${-mailIndex * 100}%)`;
+    const count = root.querySelector(".gmail-count");
+    if (count) count.textContent = `${mailIndex + 1} / ${pages}`;
+    root.querySelectorAll("[data-dot]").forEach((dot, i) => dot.classList.toggle("on", i === mailIndex));
+  };
+  go(mailIndex);
+  let startX = 0;
+  let tracking = false;
+  root.addEventListener("pointerdown", (event) => {
+    if (event.target.closest("a")) return;
+    tracking = true;
+    startX = event.clientX;
+  });
+  root.addEventListener("pointerup", (event) => {
+    if (!tracking) return;
+    tracking = false;
+    const dx = event.clientX - startX;
+    if (dx < -36) go(mailIndex + 1);
+    else if (dx > 36) go(mailIndex - 1);
+  });
 }
 
 function accountView() {
@@ -588,12 +681,12 @@ function accountView() {
               </div>
             </div>`
           : `<div class="settings">
+              <a class="mail-open" href="#/mail" data-i18n="purchase">${tr("purchase")}</a>
               <h2 data-i18n="language">${tr("language")}</h2>
               <div class="lang-picks">
                 <button type="button" data-set-lang="en" class="${lang === "en" ? "on" : ""}">English</button>
                 <button type="button" data-set-lang="es" class="${lang === "es" ? "on" : ""}">Español</button>
               </div>
-              <a class="mail-open" href="#/mail" data-i18n="purchase">${tr("purchase")}</a>
               <h2 data-i18n="myInfo">${tr("myInfo")}</h2>
               <div class="info-card">
                 ${infoRow("email", profile.email)}
@@ -638,6 +731,10 @@ function infoRow(field, value, editable, html) {
 function applyLang() {
   document.querySelectorAll("[data-i18n]").forEach((el) => {
     el.textContent = tr(el.dataset.i18n);
+  });
+  document.querySelectorAll("[data-qty]").forEach((el) => {
+    const ticket = TICKETS.find((item) => item.id === el.dataset.qty);
+    if (ticket) el.textContent = qtyLabel(ticket);
   });
   document.querySelectorAll("[data-when]").forEach((el) => {
     const ticket = TICKETS.find((item) => item.id === el.dataset.when);

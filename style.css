@@ -98,9 +98,9 @@ a { color: inherit; text-decoration: none; }
   margin-bottom: 12px;
 }
 .ticket-card img {
-  width: 112px;
-  height: 100%;
-  min-height: 112px;
+  width: 96px;
+  height: 96px;
+  min-height: 96px;
   flex: none;
   align-self: stretch;
   aspect-ratio: auto;
@@ -112,15 +112,16 @@ a { color: inherit; text-decoration: none; }
 .ticket-card .meta {
   flex: 1;
   min-width: 0;
-  min-height: 112px;
-  height: auto;
+  height: 96px;
+  min-height: 96px;
   background: var(--surface);
   border-radius: 16px;
-  padding: 12px 14px;
+  padding: 10px 14px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 3px;
+  gap: 2px;
+  overflow: hidden;
 }
 .qty { color: var(--accent); font-weight: 600; font-size: 13px; }
 .when { color: var(--muted); font-weight: 500; font-size: 13px; }
@@ -128,9 +129,9 @@ a { color: inherit; text-decoration: none; }
 .ticket-card h3 {
   margin: 0;
   flex: none;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
-  line-height: 1.3;
+  line-height: 1.2;
   letter-spacing: -0.03em;
   white-space: nowrap;
   overflow: hidden;
@@ -140,11 +141,11 @@ a { color: inherit; text-decoration: none; }
   margin: 0;
   flex: none;
   color: var(--muted);
-  font-size: 13.5px;
-  line-height: 1.35;
-  white-space: normal;
-  overflow: visible;
-  display: block;
+  font-size: 13px;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  letter-spacing: -0.02em;
 }
 
 .empty {
@@ -656,16 +657,57 @@ button, a { touch-action: manipulation; }
 }
 .mail-open {
   display: block;
-  margin: 0 0 22px;
+  margin: 0 0 18px;
   border-radius: 14px;
-  background: #1c2423;
-  color: #fff;
+  background: #3dcec0;
+  color: #06211e;
   text-align: center;
   text-decoration: none;
-  font-size: 15px;
-  font-weight: 600;
-  padding: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 15px;
 }
+.gmail {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: #fff;
+  color: #202124;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.gmail-bar {
+  display: flex;
+  align-items: center;
+  height: 52px;
+  padding: 0 6px;
+  border-bottom: 1px solid #e8eaed;
+  flex: none;
+}
+.gmail .back { color: #202124; }
+.gmail-count { margin-left: auto; margin-right: 14px; color: #5f6368; font-size: 13px; }
+.gmail-viewport { flex: 1; overflow: hidden; }
+.gmail-track { display: flex; height: 100%; transition: transform .22s ease; }
+.gmail-page {
+  min-width: 100%;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 14px 18px 4px;
+  overflow: hidden;
+}
+.gmail-page h2 { margin: 0 0 14px; font-size: 22px; font-weight: 400; }
+.gmail-from { display: flex; gap: 10px; align-items: flex-start; }
+.gmail-from b { display: block; font-size: 14px; }
+.gmail-from small { display: block; color: #5f6368; font-size: 12px; line-height: 1.35; }
+.gmail-from time { margin-left: auto; color: #5f6368; font-size: 12px; white-space: nowrap; }
+.gmail-lead { margin: 14px 0 6px; font-size: 14px; line-height: 1.35; }
+.gmail .receipt td { padding: 4px 0; font-size: 13px; color: #202124; }
+.gmail .mail-order { margin-top: 8px; }
+.gmail-dots { display: flex; justify-content: center; gap: 7px; padding: 6px 0 calc(12px + env(safe-area-inset-bottom)); }
+.gmail-dots span { width: 7px; height: 7px; border-radius: 50%; background: #dadce0; }
+.gmail-dots span.on { background: #1a73e8; }
 .mail-scroll { padding: 4px 14px 32px; display: flex; flex-direction: column; gap: 14px; }
 .mail {
   background: #fff;
