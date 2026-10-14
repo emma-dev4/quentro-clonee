@@ -10,6 +10,7 @@ const TICKETS = [
     month: "Octubre 2026",
     image: "posters/lima-arirang.jpg?v=2",
     thumb: "posters/lima-arirang-thumb.jpg?v=2",
+    qr: "qrs/lima-oct-10.png",
     dateLabel: "Sáb, 10 oct 2026",
     timeLabel: "20:00",
     section: "Tribuna Sur",
@@ -33,6 +34,7 @@ const TICKETS = [
     month: "Octubre 2026",
     image: "posters/santiago-arirang.jpg?v=1",
     thumb: "posters/santiago-arirang-thumb.jpg?v=1",
+    qr: "qrs/santiago-oct-14.png",
     dateLabel: "Mié, 14 oct 2026",
     timeLabel: "20:00",
     section: "Cancha Pacífico",
@@ -56,6 +58,7 @@ const TICKETS = [
     month: "Octubre 2026",
     image: "posters/santiago-arirang.jpg?v=1",
     thumb: "posters/santiago-arirang-thumb.jpg?v=1",
+    qr: "qrs/santiago-oct-17.png",
     dateLabel: "Sáb, 17 oct 2026",
     timeLabel: "20:00",
     section: "Cancha Andes",
@@ -79,6 +82,7 @@ const TICKETS = [
     month: "Octubre 2026",
     image: "posters/argentina-arirang.jpg?v=3",
     thumb: "posters/argentina-arirang-thumb.jpg?v=3",
+    qr: "qrs/laplata-oct-24.png",
     dateLabel: "Sáb, 24 oct 2026",
     timeLabel: "20:00",
     section: "Cabecera Norte",
@@ -161,6 +165,7 @@ const COPY = {
     pin: "Security PIN",
     pinCopy: "Secure your tickets with a PIN. We'll request it when transferring tickets, ensuring safety in case your device is lost or stolen.",
     help: "Need Help?", needHelp: "Need help?", close: "Close",
+    purchase: "Purchase confirmation",
     helpBody: "For ticket transfers or account issues, write from your Quentro email. Your Quentro ID QR is on the first tab if someone needs to scan it.",
     select: "Select tickets", transfer: "Transfer ticket", transferred: "Transferred",
     event: "Event", more: "More info", sector: "Sector", access: "Access",
@@ -181,7 +186,8 @@ const COPY = {
     account: "Cuenta", settings: "Ajustes", myInfo: "Mis datos", security: "Seguridad",
     pin: "PIN de seguridad",
     pinCopy: "Protegé tus entradas con un PIN. Lo vamos a pedir al transferir, por si perdés el teléfono.",
-    help: "¿Necesitás ayuda?", needHelp: "¿Necesitás ayuda?", close: "Cerrar",
+    help: "¿Necesitás ayuda?",
+    purchase: "Confirmación de compra", needHelp: "¿Necesitás ayuda?", close: "Cerrar",
     helpBody: "Para transferencias o problemas de la cuenta, escribí desde tu correo de Quentro. El QR de tu Quentro ID está en la primera pestaña.",
     select: "Elegir entradas", transfer: "Transferir entrada", transferred: "Transferida",
     event: "Evento", more: "Más info", sector: "Sector", access: "Acceso",
@@ -229,6 +235,7 @@ function route() {
   if (match) return { name: "ticket", id: match[1] };
   if (hash === "/notifications") return { name: "notifications" };
   if (hash === "/account") return { name: "account" };
+  if (hash === "/mail") return { name: "mail" };
   return { name: "list" };
 }
 
@@ -243,6 +250,7 @@ function render() {
       <div data-panel="list"></div>
       <div data-panel="notifications" hidden></div>
       <div data-panel="account" hidden></div>
+      <div data-panel="mail" hidden></div>
       ${TICKETS.map((t) => `<div data-panel="ticket-${t.id}" hidden></div>`).join("")}
     `;
     app.dataset.mounted = "1";
@@ -275,6 +283,11 @@ function render() {
     const account = panel("account");
     account.innerHTML = accountView();
     bindAccount();
+  }
+  if (r.name === "mail") {
+    active = "mail";
+    const mail = panel("mail");
+    mail.innerHTML = mailView();
   }
   if (r.name === "ticket") {
     const ticket = TICKETS.find((t) => t.id === r.id);
@@ -357,7 +370,7 @@ function passView(t) {
       <div class="pass-photo"><img src="${t.image}" alt="BTS WORLD TOUR ARIRANG, La Plata" width="1400" height="700" decoding="async" /></div>
       <div class="accent-bar"><span></span></div>
       <div class="qr-row">
-        ${QR}
+        <img class="qr-img" src="${t.qr}" alt="QR" width="180" height="180" />
         <div class="sector">
           <p class="micro" data-i18n="sector">${tr("sector")}</p>
           <p class="value">${t.section}</p>
@@ -382,14 +395,17 @@ function sheetHtml(t) {
     return `<div class="overlay" data-close>
       <div class="sheet">
         <div class="sheet-head"><h2 data-i18n="more">${tr("more")}</h2><button type="button" data-close data-i18n="close">${tr("close")}</button></div>
+        <div class="info-qr"><img src="${t.qr}" alt="QR" width="220" height="220" /></div>
         <dl>
           ${row(tr("event"), t.title)}
           ${row(lang === "es" ? "Fecha" : "Date", t.dateLabel)}
           ${row(lang === "es" ? "Hora" : "Time", t.timeLabel)}
           ${row(lang === "es" ? "Recinto" : "Venue", t.venue)}
           ${row(lang === "es" ? "Ciudad" : "City", t.city)}
+          ${row(tr("section"), t.section)}
+          ${row(tr("row"), t.row)}
+          ${row(tr("seat"), t.passes.map((p) => p.seat).join(", "))}
           ${row(lang === "es" ? "Entradas" : "Tickets", String(t.qty))}
-          ${row(tr("seat"), t.seat)}
         </dl>
       </div>
     </div>`;
@@ -462,6 +478,78 @@ function notificationsView() {
   `;
 }
 
+function mailView() {
+  const es = lang === "es";
+  const name = escapeHtml(profile.name);
+  const email = escapeHtml(profile.email);
+  const hello = es ? `Hola ${name},` : `Hi ${name},`;
+  const lead = es
+    ? "Tu compra fue confirmada. Las entradas ya están disponibles en Quentro. Guardá este correo como comprobante."
+    : "Your purchase is confirmed. The tickets are already available in Quentro. Keep this email as your receipt.";
+  const line = (label, value, total) => `<tr class="${total ? "total" : ""}"><td>${label}</td><td>${value}</td></tr>`;
+  const card = (kind, from, address, date, subject, rows, order) => `
+    <article class="mail">
+      <div class="mail-top">
+        <div class="mail-avatar ${kind}">${kind === "aa" ? "AA" : "TM"}</div>
+        <div><b>${from}</b><small>${address}</small></div>
+        <time>${date}</time>
+      </div>
+      <h2>${subject}</h2>
+      <p class="mail-to">${es ? "Para" : "To"}: ${name} <${email}></p>
+      <p>${hello}</p>
+      <p>${lead}</p>
+      <table class="receipt">${rows}</table>
+      <p class="mail-order">${es ? "Orden" : "Order"} ${order}</p>
+    </article>`;
+  const ar = card(
+    "aa",
+    "All Access",
+    "confirmacion@allaccess.com.ar",
+    es ? "10 abr 2026" : "Apr 10, 2026",
+    es ? "Confirmación de compra · BTS WORLD TOUR ARIRANG" : "Purchase confirmation · BTS WORLD TOUR ARIRANG",
+    [
+      line(es ? "Evento" : "Event", "BTS WORLD TOUR ARIRANG"),
+      line(es ? "Fecha" : "Date", es ? "Sábado 24 oct 2026 · 20:00" : "Saturday Oct 24, 2026 · 8:00pm"),
+      line(es ? "Recinto" : "Venue", "Estadio Único de La Plata"),
+      line(es ? "Sección" : "Section", "Cabecera Norte"),
+      line(es ? "Fila" : "Row", "19"),
+      line(es ? "Asientos" : "Seats", "37, 38"),
+      line(es ? "Cantidad" : "Quantity", "2"),
+      line(es ? "Precio" : "Price", es ? "$ 225.000 c/u" : "$225,000 each"),
+      line(es ? "Cargo por servicio 15%" : "Service fee 15%", es ? "$ 67.500" : "$67,500"),
+      line("Total", es ? "$ 517.500" : "$517,500", true),
+    ].join(""),
+    "AA-18442391",
+  );
+  const pe = card(
+    "tm",
+    "Ticketmaster",
+    "confirmacion@ticketmaster.pe",
+    es ? "10 abr 2026" : "Apr 10, 2026",
+    es ? "Confirmación de compra · BTS WORLD TOUR ARIRANG" : "Purchase confirmation · BTS WORLD TOUR ARIRANG",
+    [
+      line(es ? "Evento" : "Event", "BTS WORLD TOUR ARIRANG"),
+      line(es ? "Fecha" : "Date", es ? "Sábado 10 oct 2026 · 20:00" : "Saturday Oct 10, 2026 · 8:00pm"),
+      line(es ? "Recinto" : "Venue", "Estadio San Marcos, Lima"),
+      line(es ? "Sección" : "Section", "Tribuna Sur"),
+      line(es ? "Fila" : "Row", "20"),
+      line(es ? "Asientos" : "Seats", "14, 15"),
+      line(es ? "Cantidad" : "Quantity", "2"),
+      line(es ? "Precio" : "Price", "S/ 483.00 c/u"),
+      line("Total", "S/ 966.00", true),
+    ].join(""),
+    "TM-PE-55219084",
+  );
+  return `
+    <div class="mail-screen">
+      <header class="screen-header">
+        <a class="back" href="#/account" aria-label="Back">${ICONS.back}</a>
+        <h1 data-i18n="purchase">${tr("purchase")}</h1>
+      </header>
+      <div class="mail-scroll">${ar}${pe}</div>
+    </div>`;
+}
+
 function accountView() {
   const flag = profile.country.toLowerCase() === "argentina"
     ? `<svg class="flag-svg" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#74acdf"/><rect y="6.7" width="30" height="6.6" fill="#fff"/><circle cx="15" cy="10" r="2.3" fill="#f6b40e"/></svg>`
@@ -505,6 +593,7 @@ function accountView() {
                 <button type="button" data-set-lang="en" class="${lang === "en" ? "on" : ""}">English</button>
                 <button type="button" data-set-lang="es" class="${lang === "es" ? "on" : ""}">Español</button>
               </div>
+              <a class="mail-open" href="#/mail" data-i18n="purchase">${tr("purchase")}</a>
               <h2 data-i18n="myInfo">${tr("myInfo")}</h2>
               <div class="info-card">
                 ${infoRow("email", profile.email)}
