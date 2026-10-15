@@ -179,7 +179,7 @@ const COPY = {
     myTickets: "My Tickets", upcoming: "Upcoming", past: "Past",
     noPastTitle: "No past tickets",
     noPast: "Tickets from shows you’ve already attended will show up here.",
-    month: "October 2026", tickets: "2 tickets",
+    month: "October 2026", monthName: "October", tickets: "2 tickets",
     notifications: "Notifications", noNotes: "You don't have any notifications yet.",
     hide: "Hide", unhide: "Show",
     hideHint: "Tap a ticket to hide it. Tap it again to put it back.",
@@ -201,7 +201,7 @@ const COPY = {
     myTickets: "Mis Entradas", upcoming: "Próximos", past: "Pasados",
     noPastTitle: "No hay entradas pasadas",
     noPast: "Las entradas de shows a los que ya fuiste van a aparecer acá.",
-    month: "Octubre 2026", tickets: "2 entradas",
+    month: "Octubre 2026", monthName: "Octubre", tickets: "2 entradas",
     notifications: "Notificaciones", noNotes: "Todavía no tenés notificaciones.",
     hide: "Ocultar", unhide: "Mostrar",
     hideHint: "Tocá una entrada para ocultarla. Tocála de nuevo para volver a verla.",
@@ -343,7 +343,6 @@ function render() {
     el.hidden = el.dataset.panel !== active;
   });
   applyHidden();
-  fitVenues();
 }
 
 function listView() {
@@ -375,7 +374,7 @@ function listView() {
       ${
         tab === "past"
           ? `<div class="empty"><h2 data-i18n="noPastTitle">${tr("noPastTitle")}</h2><p data-i18n="noPast">${tr("noPast")}</p></div>`
-          : `<section><h2 class="month" data-i18n="month">${tr("month")}</h2><p class="all-hidden" data-all-hidden data-i18n="allHidden" ${anyVisible ? "hidden" : ""}>${tr("allHidden")}</p>${cards}</section>`
+          : `<section><div class="refresh" data-refresh hidden><i></i></div><h2 class="month"><span data-i18n="monthName">${tr("monthName")}</span> <span class="year">2026</span></h2><p class="all-hidden" data-all-hidden data-i18n="allHidden" ${anyVisible ? "hidden" : ""}>${tr("allHidden")}</p>${cards}</section>`
       }
     </div>
   `;
@@ -870,6 +869,59 @@ function bindList() {
       render();
     });
   });
+  const page = document.querySelector(".list-page");
+  const refresh = document.querySelector("[data-refresh]");
+  if (!page || !refresh || page.dataset.refreshBound) return;
+  page.dataset.refreshBound = "1";
+  let startY = 0;
+  let pulling = false;
+  const move = (y) => {
+    const dy = y - startY;
+    if (dy < 8 || window.scrollY > 2) return;
+    refresh.hidden = false;
+    refresh.style.transform = `translateY(${Math.min(dy * 0.35, 56)}px)`;
+    refresh.classList.toggle("ready", dy > 72);
+  };
+  const end = () => {
+    if (!pulling) return;
+    pulling = false;
+    if (refresh.classList.contains("ready")) {
+      refresh.classList.add("spin");
+      refresh.style.transform = "translateY(18px)";
+      setTimeout(() => {
+        refresh.classList.remove("spin", "ready");
+        refresh.hidden = true;
+        refresh.style.transform = "";
+      }, 650);
+    } else {
+      refresh.classList.remove("ready");
+      refresh.hidden = true;
+      refresh.style.transform = "";
+    }
+  };
+  page.addEventListener("touchstart", (event) => {
+    if (window.scrollY > 2) return;
+    pulling = true;
+    startY = event.touches[0].clientY;
+  }, { passive: true });
+  page.addEventListener("touchmove", (event) => {
+    if (!pulling) return;
+    move(event.touches[0].clientY);
+  }, { passive: true });
+  page.addEventListener("touchend", end);
+  page.addEventListener("pointerdown", (event) => {
+    if (event.pointerType === "touch" || window.scrollY > 2) return;
+    pulling = true;
+    startY = event.clientY;
+  });
+  page.addEventListener("pointermove", (event) => {
+    if (!pulling || event.pointerType === "touch") return;
+    move(event.clientY);
+  });
+  page.addEventListener("pointerup", (event) => {
+    if (event.pointerType === "touch") return;
+    end();
+  });
 }
 
 function bindSheet(ticket, slot) {
@@ -936,3 +988,11 @@ window.addEventListener("hashchange", () => {
 });
 
 render();
+
+const boot = document.getElementById("boot");
+if (boot) {
+  setTimeout(() => {
+    boot.classList.add("hide");
+    setTimeout(() => boot.remove(), 400);
+  }, 1100);
+}
