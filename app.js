@@ -180,6 +180,7 @@ const COPY = {
     noPastTitle: "No past tickets",
     noPast: "Tickets from shows you’ve already attended will show up here.",
     month: "October 2026", monthName: "October", tickets: "2 tickets",
+    syncing: "We're syncing your profile...",
     notifications: "Notifications", noNotes: "You don't have any notifications yet.",
     hide: "Hide", unhide: "Show",
     hideHint: "Tap a ticket to hide it. Tap it again to put it back.",
@@ -202,6 +203,7 @@ const COPY = {
     noPastTitle: "No hay entradas pasadas",
     noPast: "Las entradas de shows a los que ya fuiste van a aparecer acá.",
     month: "Octubre 2026", monthName: "Octubre", tickets: "2 entradas",
+    syncing: "Estamos sincronizando tu perfil...",
     notifications: "Notificaciones", noNotes: "Todavía no tenés notificaciones.",
     hide: "Ocultar", unhide: "Mostrar",
     hideHint: "Tocá una entrada para ocultarla. Tocála de nuevo para volver a verla.",
@@ -371,10 +373,11 @@ function listView() {
         <button data-tab="upcoming" class="${tab === "upcoming" ? "active" : ""}" data-i18n="upcoming">${tr("upcoming")}</button>
         <button data-tab="past" class="past ${tab === "past" ? "active" : ""}" data-i18n="past">${tr("past")}</button>
       </div>
+      <div class="pull" data-refresh><span class="spokes">${"<i></i>".repeat(12)}</span></div>
       ${
         tab === "past"
           ? `<div class="empty"><h2 data-i18n="noPastTitle">${tr("noPastTitle")}</h2><p data-i18n="noPast">${tr("noPast")}</p></div>`
-          : `<section><div class="refresh" data-refresh hidden><i></i></div><h2 class="month"><span data-i18n="monthName">${tr("monthName")}</span> <span class="year">2026</span></h2><p class="all-hidden" data-all-hidden data-i18n="allHidden" ${anyVisible ? "hidden" : ""}>${tr("allHidden")}</p>${cards}</section>`
+          : `<section><h2 class="month"><span data-i18n="monthName">${tr("monthName")}</span> <span class="year">2026</span></h2><p class="all-hidden" data-all-hidden data-i18n="allHidden" ${anyVisible ? "hidden" : ""}>${tr("allHidden")}</p>${cards}</section>`
       }
     </div>
   `;
@@ -870,34 +873,37 @@ function bindList() {
     });
   });
   const page = document.querySelector(".list-page");
-  const refresh = document.querySelector("[data-refresh]");
-  if (!page || !refresh || page.dataset.refreshBound) return;
+  const pull = document.querySelector("[data-refresh]");
+  if (!page || !pull || page.dataset.refreshBound) return;
   page.dataset.refreshBound = "1";
   let startY = 0;
   let pulling = false;
+  let distance = 0;
   const move = (y) => {
     const dy = y - startY;
-    if (dy < 8 || window.scrollY > 2) return;
-    refresh.hidden = false;
-    refresh.style.transform = `translateY(${Math.min(dy * 0.35, 56)}px)`;
-    refresh.classList.toggle("ready", dy > 72);
+    if (window.scrollY > 2) return;
+    distance = Math.max(0, dy);
+    if (distance < 6) return;
+    pull.style.transition = "none";
+    pull.style.height = `${Math.min(distance * 0.55, 96)}px`;
+    pull.classList.toggle("ready", distance > 70);
   };
   const end = () => {
     if (!pulling) return;
     pulling = false;
-    if (refresh.classList.contains("ready")) {
-      refresh.classList.add("spin");
-      refresh.style.transform = "translateY(18px)";
+    pull.style.transition = "height .2s ease";
+    if (pull.classList.contains("ready")) {
+      pull.style.height = "84px";
+      pull.classList.add("spin");
       setTimeout(() => {
-        refresh.classList.remove("spin", "ready");
-        refresh.hidden = true;
-        refresh.style.transform = "";
-      }, 650);
+        pull.classList.remove("spin", "ready");
+        pull.style.height = "0px";
+      }, 700);
     } else {
-      refresh.classList.remove("ready");
-      refresh.hidden = true;
-      refresh.style.transform = "";
+      pull.classList.remove("ready");
+      pull.style.height = "0px";
     }
+    distance = 0;
   };
   page.addEventListener("touchstart", (event) => {
     if (window.scrollY > 2) return;
@@ -989,10 +995,32 @@ window.addEventListener("hashchange", () => {
 
 render();
 
+function showSync() {
+  const sync = document.createElement("div");
+  sync.id = "sync";
+  const lines = lang === "es" ? "Estamos sincronizando<br>tu perfil..." : "We're syncing<br>your profile...";
+  sync.innerHTML = `
+    <header class="list-header">
+      <h1>${tr("myTickets")}</h1>
+      <div class="icon-row">
+        <span class="icon-btn">${ICONS.bell}</span>
+        <span class="icon-btn">${ICONS.user}<b class="live-dot"></b></span>
+      </div>
+    </header>
+    <p>${lines}</p>
+    <span class="spokes">${"<i></i>".repeat(12)}</span>
+  `;
+  document.body.appendChild(sync);
+  setTimeout(() => sync.remove(), 1600);
+}
+
 const boot = document.getElementById("boot");
 if (boot) {
   setTimeout(() => {
     boot.classList.add("hide");
-    setTimeout(() => boot.remove(), 400);
-  }, 1100);
+    setTimeout(() => {
+      boot.remove();
+      showSync();
+    }, 320);
+  }, 1200);
 }
