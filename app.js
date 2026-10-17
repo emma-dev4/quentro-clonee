@@ -29,6 +29,7 @@ const TICKETS = [
     qty: 2,
     whenEs: "miércoles 14 20:00hs",
     whenEn: "Wednesday 14 8:00pm",
+    whenPt: "quarta 14 20:00hs",
     venue: "Estadio Nacional Julio Martínez Prádanos",
     city: "Santiago, Chile",
     month: "Octubre 2026",
@@ -118,6 +119,61 @@ const TICKETS = [
       { sector: "Campo", section: "Campo", row: "Sin fila asignada", seat: "Sin asiento asignado" },
     ],
   },
+  {
+    id: "morumbis-oct-28",
+    title: "BTS - World Tour ARIRANG",
+    qty: 3,
+    whenEs: "miércoles 28 20:00hs",
+    whenEn: "Wednesday 28 8:00pm",
+    whenPt: "quarta 28 20:00hs",
+    venue: "Estádio do MorumBIS",
+    city: "São Paulo, Brasil",
+    month: "Outubro 2026",
+    image: "posters/saopaulo-arirang.jpg?v=1",
+    thumb: "posters/saopaulo-arirang-thumb.jpg?v=1",
+    qr: "qrs/morumbis-oct-28-1.png",
+    dateLabel: "Mié, 28 oct 2026",
+    dateEn: "Wed, Oct 28, 2026",
+    datePt: "Qua, 28 out 2026",
+    timeLabel: "20:00",
+    section: "Cadeira Inferior",
+    row: "8",
+    seat: "21",
+    doors: "16:00",
+    gate: "Acesso Cadeira",
+    passes: [
+      { sector: "Cadeira Inferior", section: "CI", row: "8", seat: "21", qr: "qrs/morumbis-oct-28-1.png" },
+      { sector: "Cadeira Inferior", section: "CI", row: "8", seat: "22", qr: "qrs/morumbis-oct-28-2.png" },
+      { sector: "Cadeira Inferior", section: "CI", row: "8", seat: "23", qr: "qrs/morumbis-oct-28-3.png" },
+    ],
+  },
+  {
+    id: "morumbis-oct-31",
+    title: "BTS - World Tour ARIRANG",
+    qty: 2,
+    whenEs: "sábado 31 20:00hs",
+    whenEn: "Saturday 31 8:00pm",
+    whenPt: "sábado 31 20:00hs",
+    venue: "Estádio do MorumBIS",
+    city: "São Paulo, Brasil",
+    month: "Outubro 2026",
+    image: "posters/saopaulo-arirang.jpg?v=1",
+    thumb: "posters/saopaulo-arirang-thumb.jpg?v=1",
+    qr: "qrs/morumbis-oct-31-1.png",
+    dateLabel: "Sáb, 31 oct 2026",
+    dateEn: "Sat, Oct 31, 2026",
+    datePt: "Sáb, 31 out 2026",
+    timeLabel: "20:00",
+    section: "Arquibancada",
+    row: "22",
+    seat: "4",
+    doors: "16:00",
+    gate: "Acesso Arquibancada",
+    passes: [
+      { sector: "Arquibancada", section: "ARQ", row: "22", seat: "4", qr: "qrs/morumbis-oct-31-1.png" },
+      { sector: "Arquibancada", section: "ARQ", row: "22", seat: "5", qr: "qrs/morumbis-oct-31-2.png" },
+    ],
+  },
 ];
 
 const QR = `
@@ -173,7 +229,8 @@ let sheet = null;
 let sent = false;
 let picked = new Set(["37"]);
 const LANG_KEY = "quentro-lang";
-let lang = localStorage.getItem(LANG_KEY) === "es" ? "es" : "en";
+const savedLang = localStorage.getItem(LANG_KEY);
+let lang = savedLang === "es" || savedLang === "pt" ? savedLang : "en";
 const COPY = {
   en: {
     myTickets: "My Tickets", upcoming: "Upcoming", past: "Past",
@@ -219,6 +276,29 @@ const COPY = {
     section: "Sección", row: "Fila", seat: "Asiento", doors: "Apertura puertas", start: "Inicio show",
     copied: "Quentro ID copiado",
     idCopy: "Mostrá este código QR para pasar entradas a tu cuenta con un escaneo.",
+    language: "Idioma",
+  },
+  pt: {
+    myTickets: "Meus ingressos", upcoming: "Próximos", past: "Passados",
+    noPastTitle: "Nenhum ingresso passado",
+    noPast: "Os ingressos dos shows que você já foi aparecem aqui.",
+    month: "Outubro 2026", monthName: "Outubro", tickets: "2 ingressos",
+    syncing: "Estamos sincronizando seu perfil...",
+    notifications: "Notificações", noNotes: "Você ainda não tem notificações.",
+    hide: "Ocultar", unhide: "Mostrar",
+    hideHint: "Toque num ingresso para ocultar. Toque de novo para voltar a ver.",
+    allHidden: "Todos os ingressos estão ocultos.",
+    account: "Conta", settings: "Ajustes", myInfo: "Meus dados", security: "Segurança",
+    pin: "PIN de segurança",
+    pinCopy: "Proteja seus ingressos com um PIN. Vamos pedir na transferência, caso você perca o telefone.",
+    help: "Precisa de ajuda?",
+    purchase: "Confirmação de compra", needHelp: "Precisa de ajuda?", close: "Fechar",
+    helpBody: "Para transferências ou problemas da conta, escreva do seu e-mail Quentro. O QR do Quentro ID está na primeira aba.",
+    select: "Escolher ingressos", transfer: "Transferir ingresso", transferred: "Transferido",
+    event: "Evento", more: "Mais info", sector: "Setor", access: "Acesso",
+    section: "Seção", row: "Fileira", seat: "Assento", doors: "Abertura", start: "Início",
+    copied: "Quentro ID copiado",
+    idCopy: "Mostre este QR para passar ingressos para sua conta com um escaneamento.",
     language: "Idioma",
   },
 };
@@ -285,7 +365,6 @@ function render() {
     for (const ticket of TICKETS) {
       const node = panel(`ticket-${ticket.id}`);
       node.innerHTML = passView(ticket);
-      bindPass(ticket, node);
       node.dataset.lang = lang;
       const preload = new Image();
       preload.src = ticket.image;
@@ -352,7 +431,7 @@ function listView() {
     <a class="ticket-card" data-ticket-id="${ticket.id}" href="#/ticket/${ticket.id}" ${hidden.has(ticket.id) ? "hidden" : ""}>
       <img src="${ticket.thumb}" alt="" width="112" height="112" decoding="async" />
       <div class="meta">
-        <p><span class="qty" data-qty="${ticket.id}">${qtyLabel(ticket)}</span> <span class="when" data-when="${ticket.id}">${lang === "es" ? ticket.whenEs : ticket.whenEn}</span></p>
+        <p><span class="qty" data-qty="${ticket.id}">${qtyLabel(ticket)}</span> <span class="when" data-when="${ticket.id}">${whenOf(ticket)}</span></p>
         <h3>${ticket.title}</h3>
         <p class="venue">${ticket.venue}</p>
       </div>
@@ -384,36 +463,43 @@ function listView() {
 }
 
 function passView(t) {
-  return `
-    <header class="pass-header">
-      <a class="back" href="#/" aria-label="Volver">${ICONS.back}</a>
-      <div>
-        <h1 data-i18n="event">${tr("event")}</h1>
-        <p class="pass-sub">${t.dateLabel}<span>${t.venue}</span></p>
-      </div>
-      <button class="share-pass" type="button" data-transfer aria-label="Transferir">${ICONS.upload}</button>
-    </header>
-    <article class="pass">
-      <div class="pass-photo"><img src="${t.image}" alt="BTS WORLD TOUR ARIRANG, La Plata" width="1400" height="700" decoding="async" /></div>
+  const pages = t.passes.map((pass) => `
+    <article class="pass pass-page">
+      <div class="pass-photo"><img src="${t.image}" alt="" width="640" height="640" decoding="async" /></div>
       <div class="accent-bar"><span></span></div>
       <div class="qr-row">
-        <img class="qr-img" src="${t.qr}" alt="QR" width="180" height="180" />
+        <img class="qr-img" src="${pass.qr || t.qr}" alt="QR" width="180" height="180" />
         <div class="sector">
           <p class="micro" data-i18n="sector">${tr("sector")}</p>
-          <p class="value">${t.section}</p>
+          <p class="value">${pass.sector}</p>
           <p class="micro access" data-i18n="access">${tr("access")}</p>
           <p class="value">${t.gate}</p>
           <button class="mas-info" type="button" data-info data-i18n="more">${tr("more")}</button>
         </div>
       </div>
       <div class="facts">
-        <div><p class="micro" data-i18n="section">${tr("section")}</p><p class="value">${t.passes[0].section}</p></div>
-        <div><p class="micro" data-i18n="row">${tr("row")}</p><p class="value">${t.row}</p></div>
-        <div><p class="micro" data-i18n="seat">${tr("seat")}</p><p class="value">${t.seat}</p></div>
+        <div><p class="micro" data-i18n="section">${tr("section")}</p><p class="value">${pass.section}</p></div>
+        <div><p class="micro" data-i18n="row">${tr("row")}</p><p class="value">${pass.row}</p></div>
+        <div><p class="micro" data-i18n="seat">${tr("seat")}</p><p class="value">${pass.seat}</p></div>
         <div><p class="micro" data-i18n="doors">${tr("doors")}</p><p class="value">${t.doors}</p></div>
         <div><p class="micro" data-i18n="start">${tr("start")}</p><p class="value">${t.timeLabel} hs</p></div>
       </div>
     </article>
+  `).join("");
+  const dots = t.passes.length > 1
+    ? `<div class="pass-dots">${t.passes.map((_, i) => `<span data-pass-dot class="${i === (passIndex[t.id] || 0) ? "on" : ""}"></span>`).join("")}</div>`
+    : "";
+  return `
+    <header class="pass-header">
+      <a class="back" href="#/" aria-label="Volver">${ICONS.back}</a>
+      <div>
+        <h1 data-i18n="event">${tr("event")}</h1>
+        <p class="pass-sub"><span data-date="${t.id}">${dateOf(t)}</span><span>${t.venue}</span></p>
+      </div>
+      <button class="share-pass" type="button" data-transfer aria-label="Transferir">${ICONS.upload}</button>
+    </header>
+    <div class="pass-viewport"><div class="pass-track" data-pass-track>${pages}</div></div>
+    ${dots}
   `;
 }
 
@@ -422,17 +508,17 @@ function sheetHtml(t) {
     return `<div class="overlay" data-close>
       <div class="sheet">
         <div class="sheet-head"><h2 data-i18n="more">${tr("more")}</h2><button type="button" data-close data-i18n="close">${tr("close")}</button></div>
-        <div class="info-qr"><img src="${t.qr}" alt="QR" width="220" height="220" /></div>
+        <div class="info-qr"><img src="${(activePass(t).qr || t.qr)}" alt="QR" width="220" height="220" /></div>
         <dl>
           ${row(tr("event"), t.title)}
-          ${row(lang === "es" ? "Fecha" : "Date", t.dateLabel)}
-          ${row(lang === "es" ? "Hora" : "Time", t.timeLabel)}
-          ${row(lang === "es" ? "Recinto" : "Venue", t.venue)}
-          ${row(lang === "es" ? "Ciudad" : "City", t.city)}
-          ${row(tr("section"), t.section)}
-          ${row(tr("row"), t.row)}
-          ${row(tr("seat"), t.passes.map((p) => p.seat).join(", "))}
-          ${row(lang === "es" ? "Entradas" : "Tickets", String(t.qty))}
+          ${row(lang === "pt" ? "Data" : lang === "es" ? "Fecha" : "Date", dateOf(t))}
+          ${row(lang === "pt" ? "Hora" : lang === "es" ? "Hora" : "Time", t.timeLabel)}
+          ${row(lang === "pt" ? "Local" : lang === "es" ? "Recinto" : "Venue", t.venue)}
+          ${row(lang === "pt" ? "Cidade" : lang === "es" ? "Ciudad" : "City", t.city)}
+          ${row(tr("section"), activePass(t).sector)}
+          ${row(tr("row"), activePass(t).row)}
+          ${row(tr("seat"), activePass(t).seat)}
+          ${row(lang === "pt" ? "Ingressos" : lang === "es" ? "Entradas" : "Tickets", String(t.qty))}
         </dl>
       </div>
     </div>`;
@@ -507,6 +593,7 @@ function notificationsView() {
 
 function qtyLabel(ticket) {
   const n = ticket.qty;
+  if (lang === "pt") return n === 1 ? "1 ingresso" : `${n} ingressos`;
   if (lang === "es") return n === 1 ? "1 entrada" : `${n} entradas`;
   return n === 1 ? "1 ticket" : `${n} tickets`;
 }
@@ -523,6 +610,23 @@ function fitVenues() {
 }
 
 let mailIndex = 0;
+const passIndex = {};
+
+function whenOf(ticket) {
+  if (lang === "pt") return ticket.whenPt || ticket.whenEs;
+  if (lang === "en") return ticket.whenEn;
+  return ticket.whenEs;
+}
+
+function dateOf(ticket) {
+  if (lang === "pt") return ticket.datePt || ticket.dateLabel;
+  if (lang === "en") return ticket.dateEn || ticket.dateLabel;
+  return ticket.dateLabel;
+}
+
+function activePass(ticket) {
+  return ticket.passes[passIndex[ticket.id] || 0] || ticket.passes[0];
+}
 
 function mailView() {
   const es = lang === "es";
@@ -688,6 +792,7 @@ function accountView() {
               <div class="lang-picks">
                 <button type="button" data-set-lang="en" class="${lang === "en" ? "on" : ""}">English</button>
                 <button type="button" data-set-lang="es" class="${lang === "es" ? "on" : ""}">Español</button>
+                <button type="button" data-set-lang="pt" class="${lang === "pt" ? "on" : ""}">Português</button>
               </div>
               <h2 data-i18n="myInfo">${tr("myInfo")}</h2>
               <div class="info-card">
@@ -738,9 +843,13 @@ function applyLang() {
     const ticket = TICKETS.find((item) => item.id === el.dataset.qty);
     if (ticket) el.textContent = qtyLabel(ticket);
   });
+  document.querySelectorAll("[data-date]").forEach((el) => {
+    const ticket = TICKETS.find((item) => item.id === el.dataset.date);
+    if (ticket) el.textContent = dateOf(ticket);
+  });
   document.querySelectorAll("[data-when]").forEach((el) => {
     const ticket = TICKETS.find((item) => item.id === el.dataset.when);
-    if (ticket) el.textContent = lang === "es" ? ticket.whenEs : ticket.whenEn;
+    if (ticket) el.textContent = whenOf(ticket);
   });
   document.querySelectorAll("[data-set-lang]").forEach((btn) => {
     btn.classList.toggle("on", btn.getAttribute("data-set-lang") === lang);
@@ -956,9 +1065,46 @@ function bindSheet(ticket, slot) {
 
 function bindPass(ticket, root) {
   if (!ticket || !root) return;
-  root.querySelector("[data-info]")?.addEventListener("click", () => {
-    sheet = "info";
-    render();
+  const track = root.querySelector("[data-pass-track]");
+  const dots = [...root.querySelectorAll("[data-pass-dot]")];
+  const go = (index) => {
+    const max = ticket.passes.length - 1;
+    passIndex[ticket.id] = Math.max(0, Math.min(max, index));
+    if (track) track.style.transform = `translateX(${-passIndex[ticket.id] * 100}%)`;
+    dots.forEach((dot, i) => dot.classList.toggle("on", i === passIndex[ticket.id]));
+  };
+  go(passIndex[ticket.id] || 0);
+  let startX = 0;
+  let mode = "";
+  const finish = (x) => {
+    const dx = x - startX;
+    mode = "";
+    if (dx < -36) go((passIndex[ticket.id] || 0) + 1);
+    else if (dx > 36) go((passIndex[ticket.id] || 0) - 1);
+  };
+  root.addEventListener("touchstart", (event) => {
+    if (event.target.closest("a, button")) return;
+    mode = "touch";
+    startX = event.touches[0].clientX;
+  }, { passive: true });
+  root.addEventListener("touchend", (event) => {
+    if (mode !== "touch") return;
+    finish(event.changedTouches[0].clientX);
+  });
+  root.addEventListener("pointerdown", (event) => {
+    if (mode === "touch" || event.target.closest("a, button")) return;
+    mode = "pointer";
+    startX = event.clientX;
+  });
+  window.addEventListener("pointerup", (event) => {
+    if (mode !== "pointer" || root.hidden) return;
+    finish(event.clientX);
+  });
+  root.querySelectorAll("[data-info]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      sheet = "info";
+      render();
+    });
   });
   root.querySelector("[data-transfer]")?.addEventListener("click", () => {
     sent = false;
@@ -998,7 +1144,11 @@ render();
 function showSync() {
   const sync = document.createElement("div");
   sync.id = "sync";
-  const lines = lang === "es" ? "Estamos sincronizando<br>tu perfil..." : "We're syncing<br>your profile...";
+  const lines = lang === "pt"
+    ? "Estamos sincronizando<br>seu perfil..."
+    : lang === "es"
+      ? "Estamos sincronizando<br>tu perfil..."
+      : "We're syncing<br>your profile...";
   sync.innerHTML = `
     <header class="list-header">
       <h1>${tr("myTickets")}</h1>

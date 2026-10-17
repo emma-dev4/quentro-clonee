@@ -395,12 +395,17 @@ a { color: inherit; text-decoration: none; }
 .pass-header .pass-sub span { display: block; }
 
 .pass {
-  margin: 0 12px 32px;
+  margin: 0;
   overflow: hidden;
-  border-radius: 16px;
   background: var(--paper);
   color: var(--paper-fg);
 }
+.pass-viewport { overflow: hidden; margin: 0 12px 8px; border-radius: 16px; }
+.pass-track { display: flex; transition: transform .22s ease; }
+.pass-page { min-width: 100%; width: 100%; flex: none; }
+.pass-dots { display: flex; justify-content: center; gap: 6px; padding: 12px 0 20px; }
+.pass-dots span { width: 6px; height: 6px; border-radius: 50%; background: #3a3a3c; }
+.pass-dots span.on { background: #fff; }
 .pass-photo {
   height: 250px;
   background: #111;
@@ -730,7 +735,7 @@ button, a { touch-action: manipulation; }
 .pin-switch.on span { transform: translateX(20px); }
 .lang-picks {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 8px;
   margin: 0 0 22px;
 }
@@ -739,9 +744,9 @@ button, a { touch-action: manipulation; }
   border-radius: 999px;
   background: #1c2423;
   color: #c5cbc9;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 600;
-  padding: 12px 8px;
+  padding: 12px 4px;
 }
 .lang-picks button.on {
   background: #3dcec0;
