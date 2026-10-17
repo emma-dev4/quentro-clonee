@@ -122,7 +122,7 @@ const TICKETS = [
   {
     id: "morumbis-oct-28",
     title: "BTS - World Tour ARIRANG",
-    qty: 3,
+    qty: 2,
     whenEs: "miércoles 28 20:00hs",
     whenEn: "Wednesday 28 8:00pm",
     whenPt: "quarta 28 20:00hs",
@@ -134,44 +134,16 @@ const TICKETS = [
     qr: "qrs/morumbis-oct-28-1.png",
     dateLabel: "Mié, 28 oct 2026",
     dateEn: "Wed, Oct 28, 2026",
-    datePt: "Qua, 28 out 2026",
+    datePt: "28 de outubro de 2026",
     timeLabel: "20:00",
-    section: "Cadeira Inferior",
-    row: "8",
-    seat: "21",
-    doors: "16:00",
-    gate: "Acesso Cadeira",
+    section: "Em pé",
+    row: "Não se aplica",
+    seat: "Sem numeração",
+    doors: "16:00 hs",
+    gate: "Acesso Pista",
     passes: [
-      { sector: "Cadeira Inferior", section: "CI", row: "8", seat: "21", qr: "qrs/morumbis-oct-28-1.png" },
-      { sector: "Cadeira Inferior", section: "CI", row: "8", seat: "22", qr: "qrs/morumbis-oct-28-2.png" },
-      { sector: "Cadeira Inferior", section: "CI", row: "8", seat: "23", qr: "qrs/morumbis-oct-28-3.png" },
-    ],
-  },
-  {
-    id: "morumbis-oct-31",
-    title: "BTS - World Tour ARIRANG",
-    qty: 2,
-    whenEs: "sábado 31 20:00hs",
-    whenEn: "Saturday 31 8:00pm",
-    whenPt: "sábado 31 20:00hs",
-    venue: "Estádio do MorumBIS",
-    city: "São Paulo, Brasil",
-    month: "Outubro 2026",
-    image: "posters/saopaulo-arirang.jpg?v=1",
-    thumb: "posters/saopaulo-arirang-thumb.jpg?v=1",
-    qr: "qrs/morumbis-oct-31-1.png",
-    dateLabel: "Sáb, 31 oct 2026",
-    dateEn: "Sat, Oct 31, 2026",
-    datePt: "Sáb, 31 out 2026",
-    timeLabel: "20:00",
-    section: "Arquibancada",
-    row: "22",
-    seat: "4",
-    doors: "16:00",
-    gate: "Acesso Arquibancada",
-    passes: [
-      { sector: "Arquibancada", section: "ARQ", row: "22", seat: "4", qr: "qrs/morumbis-oct-31-1.png" },
-      { sector: "Arquibancada", section: "ARQ", row: "22", seat: "5", qr: "qrs/morumbis-oct-31-2.png" },
+      { sector: "Pista Premium", section: "Em pé", row: "Não se aplica", seat: "Sem numeração", qr: "qrs/morumbis-oct-28-1.png" },
+      { sector: "Pista Premium", section: "Em pé", row: "Não se aplica", seat: "Sem numeração", qr: "qrs/morumbis-oct-28-2.png" },
     ],
   },
 ];
@@ -296,7 +268,7 @@ const COPY = {
     helpBody: "Para transferências ou problemas da conta, escreva do seu e-mail Quentro. O QR do Quentro ID está na primeira aba.",
     select: "Escolher ingressos", transfer: "Transferir ingresso", transferred: "Transferido",
     event: "Evento", more: "Mais info", sector: "Setor", access: "Acesso",
-    section: "Seção", row: "Fileira", seat: "Assento", doors: "Abertura", start: "Início",
+    section: "Seção", row: "Fileira", seat: "Assento", doors: "Portas abrindo", start: "Começar show",
     copied: "Quentro ID copiado",
     idCopy: "Mostre este QR para passar ingressos para sua conta com um escaneamento.",
     language: "Idioma",
@@ -464,31 +436,36 @@ function listView() {
 
 function passView(t) {
   const pages = t.passes.map((pass) => `
-    <article class="pass pass-page">
-      <div class="pass-photo"><img src="${t.image}" alt="" width="640" height="640" decoding="async" /></div>
-      <div class="accent-bar"><span></span></div>
-      <div class="qr-row">
-        <img class="qr-img" src="${pass.qr || t.qr}" alt="QR" width="180" height="180" />
-        <div class="sector">
+    <div class="pass-page ${t.passes.length === 1 ? "solo" : ""}">
+      <article class="pass">
+        <div class="pass-photo"><img src="${t.image}" alt="" width="640" height="640" decoding="async" /></div>
+        <div class="accent-bar"><span></span></div>
+        <div class="qr-row">
+          <img class="qr-img" src="${pass.qr || t.qr}" alt="QR" width="180" height="180" />
+          <div class="sector">
+            <p class="micro" data-i18n="access">${tr("access")}</p>
+            <p class="value">${t.gate}</p>
+            <div class="qr-times">
+              <div><p class="micro" data-i18n="doors">${tr("doors")}</p><p class="value">${t.doors}</p></div>
+              <div><p class="micro" data-i18n="start">${tr("start")}</p><p class="value">${t.timeLabel} hs</p></div>
+            </div>
+          </div>
+        </div>
+      </article>
+      <article class="pass pass-meta">
+        <div class="meta-block">
           <p class="micro" data-i18n="sector">${tr("sector")}</p>
           <p class="value">${pass.sector}</p>
-          <p class="micro access" data-i18n="access">${tr("access")}</p>
-          <p class="value">${t.gate}</p>
-          <button class="mas-info" type="button" data-info data-i18n="more">${tr("more")}</button>
         </div>
-      </div>
-      <div class="facts">
-        <div><p class="micro" data-i18n="section">${tr("section")}</p><p class="value">${pass.section}</p></div>
-        <div><p class="micro" data-i18n="row">${tr("row")}</p><p class="value">${pass.row}</p></div>
-        <div><p class="micro" data-i18n="seat">${tr("seat")}</p><p class="value">${pass.seat}</p></div>
-        <div><p class="micro" data-i18n="doors">${tr("doors")}</p><p class="value">${t.doors}</p></div>
-        <div><p class="micro" data-i18n="start">${tr("start")}</p><p class="value">${t.timeLabel} hs</p></div>
-      </div>
-    </article>
+        <div class="facts">
+          <div><p class="micro" data-i18n="section">${tr("section")}</p><p class="value">${pass.section}</p></div>
+          <div><p class="micro" data-i18n="row">${tr("row")}</p><p class="value">${pass.row}</p></div>
+          <div><p class="micro" data-i18n="seat">${tr("seat")}</p><p class="value">${pass.seat}</p></div>
+        </div>
+        <button class="mas-info" type="button" data-info data-i18n="more">${tr("more")}</button>
+      </article>
+    </div>
   `).join("");
-  const dots = t.passes.length > 1
-    ? `<div class="pass-dots">${t.passes.map((_, i) => `<span data-pass-dot class="${i === (passIndex[t.id] || 0) ? "on" : ""}"></span>`).join("")}</div>`
-    : "";
   return `
     <header class="pass-header">
       <a class="back" href="#/" aria-label="Volver">${ICONS.back}</a>
@@ -499,7 +476,6 @@ function passView(t) {
       <button class="share-pass" type="button" data-transfer aria-label="Transferir">${ICONS.upload}</button>
     </header>
     <div class="pass-viewport"><div class="pass-track" data-pass-track>${pages}</div></div>
-    ${dots}
   `;
 }
 
@@ -1066,12 +1042,14 @@ function bindSheet(ticket, slot) {
 function bindPass(ticket, root) {
   if (!ticket || !root) return;
   const track = root.querySelector("[data-pass-track]");
-  const dots = [...root.querySelectorAll("[data-pass-dot]")];
   const go = (index) => {
     const max = ticket.passes.length - 1;
     passIndex[ticket.id] = Math.max(0, Math.min(max, index));
-    if (track) track.style.transform = `translateX(${-passIndex[ticket.id] * 100}%)`;
-    dots.forEach((dot, i) => dot.classList.toggle("on", i === passIndex[ticket.id]));
+    const page = track?.querySelector(".pass-page");
+    if (!track || !page) return;
+    const gap = parseFloat(getComputedStyle(track).columnGap) || 12;
+    const step = page.getBoundingClientRect().width + gap;
+    track.style.transform = `translateX(${-passIndex[ticket.id] * step}px)`;
   };
   go(passIndex[ticket.id] || 0);
   let startX = 0;

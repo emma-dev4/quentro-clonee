@@ -397,17 +397,16 @@ a { color: inherit; text-decoration: none; }
 .pass {
   margin: 0;
   overflow: hidden;
-  background: var(--paper);
+  border-radius: 14px;
+  background: #fff;
   color: var(--paper-fg);
 }
-.pass-viewport { overflow: hidden; margin: 0 12px 8px; border-radius: 16px; }
-.pass-track { display: flex; transition: transform .22s ease; }
-.pass-page { min-width: 100%; width: 100%; flex: none; }
-.pass-dots { display: flex; justify-content: center; gap: 6px; padding: 12px 0 20px; }
-.pass-dots span { width: 6px; height: 6px; border-radius: 50%; background: #3a3a3c; }
-.pass-dots span.on { background: #fff; }
+.pass-viewport { overflow: hidden; margin: 0 0 28px; }
+.pass-track { display: flex; gap: 12px; padding-left: 16px; transition: transform .28s ease; }
+.pass-page { flex: 0 0 calc(100% - 52px); width: calc(100% - 52px); min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.pass-page.solo { flex-basis: calc(100% - 32px); width: calc(100% - 32px); }
 .pass-photo {
-  height: 250px;
+  height: 168px;
   background: #111;
   position: relative;
 }
@@ -438,7 +437,7 @@ a { color: inherit; text-decoration: none; }
   padding: 20px;
   background: var(--paper);
 }
-.qr-row svg, .qr-img { width: 148px; height: 148px; flex-shrink: 0; background: #fff; }
+.qr-row svg, .qr-img { width: 128px; height: 128px; flex-shrink: 0; background: #fff; }
 .info-qr { display: grid; place-items: center; margin: 0 0 16px; }
 .info-qr img { width: 196px; height: 196px; background: #fff; }
 .sheet { max-height: min(86vh, 640px); overflow: auto; }
@@ -465,14 +464,22 @@ a { color: inherit; text-decoration: none; }
   padding: 12px;
 }
 
+.qr-times { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 14px; }
+.qr-times .micro { letter-spacing: .08em; font-size: 9px; }
+.qr-times .value { white-space: nowrap; font-size: 13px; }
+.pass-meta { padding: 16px 16px 14px; }
+.meta-block { padding-bottom: 14px; }
+.meta-block .value { margin: 4px 0 0; font-size: 16px; font-weight: 600; }
 .facts {
-  margin: 0 12px 12px;
+  margin: 0;
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 20px 16px;
-  padding: 20px;
+  grid-template-columns: 1.3fr .8fr .9fr;
+  gap: 8px;
+  padding: 14px 0 4px;
+  border-top: 1px solid #ececec;
 }
-.facts .value { margin: 4px 0 0; font-size: 14px; font-weight: 500; }
+.facts .value { margin: 4px 0 0; font-size: 14px; font-weight: 600; line-height: 1.25; }
+.pass-meta .mas-info { margin-top: 14px; }
 
 .transfer {
   width: 100%;
