@@ -420,6 +420,7 @@ html.pass-lock .pass-viewport {
   flex: 1;
   min-height: 0;
   margin: 0;
+  padding-bottom: max(28px, calc(env(safe-area-inset-bottom) + 16px));
   touch-action: none;
 }
 html.pass-lock .pass-track { height: 100%; align-items: stretch; }
