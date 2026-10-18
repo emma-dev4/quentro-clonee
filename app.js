@@ -122,7 +122,7 @@ const TICKETS = [
   {
     id: "morumbis-oct-28",
     title: "BTS - World Tour ARIRANG",
-    qty: 2,
+    qty: 3,
     whenEs: "miércoles 28 20:00hs",
     whenEn: "Wednesday 28 8:00pm",
     whenPt: "quarta 28 20:00hs",
@@ -144,24 +144,25 @@ const TICKETS = [
     passes: [
       { sector: "Pista", section: "Em pé", row: "Não se aplica", seat: "Sem numeração", qr: "qrs/morumbis-oct-28-1.png" },
       { sector: "Pista", section: "Em pé", row: "Não se aplica", seat: "Sem numeração", qr: "qrs/morumbis-oct-28-2.png" },
+      { sector: "Pista", section: "Em pé", row: "Não se aplica", seat: "Sem numeração", qr: "qrs/morumbis-oct-28-3.png" },
     ],
   },
   {
-    id: "morumbis-oct-31",
+    id: "morumbis-oct-30",
     title: "BTS - World Tour ARIRANG",
-    qty: 3,
-    whenEs: "sábado 31 20:00hs",
-    whenEn: "Saturday 31 8:00pm",
-    whenPt: "sábado 31 20:00hs",
+    qty: 2,
+    whenEs: "viernes 30 20:00hs",
+    whenEn: "Friday 30 8:00pm",
+    whenPt: "sexta 30 20:00hs",
     venue: "Estádio do MorumBIS",
     city: "São Paulo, Brasil",
     month: "Outubro 2026",
     image: "posters/saopaulo-arirang.jpg?v=1",
     thumb: "posters/saopaulo-arirang-thumb.jpg?v=1",
-    qr: "qrs/morumbis-oct-31-1.png",
-    dateLabel: "Sáb, 31 oct 2026",
-    dateEn: "Sat, Oct 31, 2026",
-    datePt: "31 de outubro de 2026",
+    qr: "qrs/morumbis-oct-30-1.png",
+    dateLabel: "Vie, 30 oct 2026",
+    dateEn: "Fri, Oct 30, 2026",
+    datePt: "30 de outubro de 2026",
     timeLabel: "20:00",
     section: "Em pé",
     row: "Não se aplica",
@@ -169,9 +170,8 @@ const TICKETS = [
     doors: "16:00 hs",
     gate: "Acesso Pista",
     passes: [
-      { sector: "Pista", section: "Em pé", row: "Não se aplica", seat: "Sem numeração", qr: "qrs/morumbis-oct-31-1.png" },
-      { sector: "Pista", section: "Em pé", row: "Não se aplica", seat: "Sem numeração", qr: "qrs/morumbis-oct-31-2.png" },
-      { sector: "Pista", section: "Em pé", row: "Não se aplica", seat: "Sem numeração", qr: "qrs/morumbis-oct-31-3.png" },
+      { sector: "Pista", section: "Em pé", row: "Não se aplica", seat: "Sem numeração", qr: "qrs/morumbis-oct-30-1.png" },
+      { sector: "Pista", section: "Em pé", row: "Não se aplica", seat: "Sem numeração", qr: "qrs/morumbis-oct-30-2.png" },
     ],
   },
 ];
@@ -423,6 +423,7 @@ function render() {
   document.querySelectorAll("[data-panel]").forEach((el) => {
     el.hidden = el.dataset.panel !== active;
   });
+  document.documentElement.classList.toggle("pass-lock", r.name === "ticket");
   applyHidden();
 }
 
@@ -1119,6 +1120,12 @@ function bindPass(ticket, root) {
     render();
   });
 }
+
+document.addEventListener("touchmove", (event) => {
+  if (!document.documentElement.classList.contains("pass-lock")) return;
+  if (event.target.closest(".sheet, .picker-list")) return;
+  event.preventDefault();
+}, { passive: false });
 
 document.addEventListener("click", (event) => {
   const langBtn = event.target.closest("[data-set-lang]");
