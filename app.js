@@ -142,8 +142,8 @@ const TICKETS = [
     doors: "16:00 hs",
     gate: "Acesso Pista",
     passes: [
-      { sector: "Pista Premium", section: "Em pé", row: "Não se aplica", seat: "Sem numeração", qr: "qrs/morumbis-oct-28-1.png" },
-      { sector: "Pista Premium", section: "Em pé", row: "Não se aplica", seat: "Sem numeração", qr: "qrs/morumbis-oct-28-2.png" },
+      { sector: "Pista", section: "Em pé", row: "Não se aplica", seat: "Sem numeração", qr: "qrs/morumbis-oct-28-1.png" },
+      { sector: "Pista", section: "Em pé", row: "Não se aplica", seat: "Sem numeração", qr: "qrs/morumbis-oct-28-2.png" },
     ],
   },
   {
@@ -169,9 +169,9 @@ const TICKETS = [
     doors: "16:00 hs",
     gate: "Acesso Pista",
     passes: [
-      { sector: "Pista Premium", section: "Em pé", row: "Não se aplica", seat: "Sem numeração", qr: "qrs/morumbis-oct-31-1.png" },
-      { sector: "Pista Premium", section: "Em pé", row: "Não se aplica", seat: "Sem numeração", qr: "qrs/morumbis-oct-31-2.png" },
-      { sector: "Pista Premium", section: "Em pé", row: "Não se aplica", seat: "Sem numeração", qr: "qrs/morumbis-oct-31-3.png" },
+      { sector: "Pista", section: "Em pé", row: "Não se aplica", seat: "Sem numeração", qr: "qrs/morumbis-oct-31-1.png" },
+      { sector: "Pista", section: "Em pé", row: "Não se aplica", seat: "Sem numeração", qr: "qrs/morumbis-oct-31-2.png" },
+      { sector: "Pista", section: "Em pé", row: "Não se aplica", seat: "Sem numeração", qr: "qrs/morumbis-oct-31-3.png" },
     ],
   },
 ];
