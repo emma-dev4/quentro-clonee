@@ -277,6 +277,8 @@ const ICONS = {
 let tab = "upcoming";
 let sheet = null;
 let sent = false;
+let transferTo = "";
+let transferTimer = 0;
 let picked = new Set(["37"]);
 const LANG_KEY = "quentro-lang";
 const savedLang = localStorage.getItem(LANG_KEY);
@@ -299,6 +301,7 @@ const COPY = {
     purchase: "Purchase confirmation",
     helpBody: "For ticket transfers or account issues, write from your Quentro email. Your Quentro ID QR is on the first tab if someone needs to scan it.",
     select: "Select tickets", transfer: "Transfer ticket", transferred: "Transferred",
+    transferring: "Transferring", sentTo: "to", recipient: "Recipient email", done: "Done",
     event: "Event", more: "More info", sector: "Sector", access: "Access",
     section: "Section", row: "Row", seat: "Seat", doors: "Doors open", start: "Show start",
     copied: "Quentro ID copied",
@@ -322,6 +325,7 @@ const COPY = {
     purchase: "Confirmación de compra", needHelp: "¿Necesitás ayuda?", close: "Cerrar",
     helpBody: "Para transferencias o problemas de la cuenta, escribí desde tu correo de Quentro. El QR de tu Quentro ID está en la primera pestaña.",
     select: "Elegir entradas", transfer: "Transferir entrada", transferred: "Transferida",
+    transferring: "Transfiriendo", sentTo: "a", recipient: "Correo", done: "Listo",
     event: "Evento", more: "Más info", sector: "Sector", access: "Acceso",
     section: "Sección", row: "Fila", seat: "Asiento", doors: "Apertura puertas", start: "Inicio show",
     copied: "Quentro ID copiado",
@@ -345,6 +349,7 @@ const COPY = {
     purchase: "Confirmação de compra", needHelp: "Precisa de ajuda?", close: "Fechar",
     helpBody: "Para transferências ou problemas da conta, escreva do seu e-mail Quentro. O QR do Quentro ID está na primeira aba.",
     select: "Escolher ingressos", transfer: "Transferir ingresso", transferred: "Transferido",
+    transferring: "Transferindo", sentTo: "para", recipient: "E-mail", done: "Pronto",
     event: "Evento", more: "Mais info", sector: "Setor", access: "Acesso",
     section: "Seção", row: "Fileira", seat: "Assento", doors: "Portas abrindo", start: "Começar show",
     copied: "Quentro ID copiado",
@@ -578,6 +583,18 @@ function sheetHtml(t) {
       </div>
     </div>`;
   }
+  if (sheet === "sending" || sheet === "done") {
+    const done = sheet === "done";
+    return `<div class="xfer">
+      ${done
+        ? `<div class="xfer-ok"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#06221e" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></div>
+           <h2>${tr("transferred")}</h2>
+           <p>${tr("sentTo")}</p>
+           <b>${escapeHtml(transferTo)}</b>
+           <button type="button" class="picker-go" data-close>${tr("done")}</button>`
+        : `<span class="spokes">${"<i></i>".repeat(12)}</span><h2>${tr("transferring")}</h2>`}
+    </div>`;
+  }
   if (sheet === "transfer") {
     return `<div class="picker">
       <header class="picker-head">
@@ -604,7 +621,11 @@ function sheetHtml(t) {
         }).join("")}
       </div>
       <div class="picker-foot">
-        <button type="button" class="picker-go" data-send ${picked.size === 0 ? "disabled" : ""} data-i18n="${sent ? "transferred" : "transfer"}">${sent ? tr("transferred") : tr("transfer")}</button>
+        <label class="xfer-mail">
+          <span>${tr("recipient")}</span>
+          <input type="email" inputmode="email" autocomplete="email" data-mail placeholder="email@gmail.com" value="${escapeHtml(transferTo)}" />
+        </label>
+        <button type="button" class="picker-go" data-send ${picked.size === 0 || !transferTo.includes("@") ? "disabled" : ""}>${tr("transfer")}</button>
       </div>
     </div>`;
   }
@@ -1103,15 +1124,35 @@ function bindSheet(ticket, slot) {
       render();
     });
   });
+  slot.querySelector("[data-mail]")?.addEventListener("input", (event) => {
+    transferTo = event.target.value.trim();
+    const go = slot.querySelector("[data-send]");
+    if (go) go.disabled = picked.size === 0 || !transferTo.includes("@");
+  });
   slot.querySelector("[data-send]")?.addEventListener("click", () => {
-    if (picked.size === 0) return;
-    sent = true;
+    const value = (slot.querySelector("[data-mail]")?.value || "").trim();
+    if (picked.size === 0 || !value.includes("@")) return;
+    transferTo = value;
+    sheet = "sending";
     render();
   });
+  if (sheet === "sending" && !transferTimer) {
+    transferTimer = setTimeout(() => {
+      transferTimer = 0;
+      sheet = "done";
+      sent = true;
+      render();
+    }, 2200);
+  }
   slot.querySelectorAll("[data-close]").forEach((el) => {
     el.addEventListener("click", (e) => {
       if (el.classList.contains("overlay") && e.target !== el) return;
+      if (transferTimer) {
+        clearTimeout(transferTimer);
+        transferTimer = 0;
+      }
       sheet = null;
+      transferTo = "";
       render();
     });
   });
@@ -1199,6 +1240,11 @@ document.addEventListener("click", (event) => {
 window.addEventListener("hashchange", () => {
   sheet = null;
   sent = false;
+  transferTo = "";
+  if (transferTimer) {
+    clearTimeout(transferTimer);
+    transferTimer = 0;
+  }
   render();
 });
 
