@@ -150,7 +150,7 @@ const TICKETS = [
   {
     id: "morumbis-oct-28-cadeira",
     title: "BTS - World Tour ARIRANG",
-    qty: 1,
+    qty: 2,
     whenEs: "miércoles 28 20:00hs",
     whenEn: "Wednesday 28 8:00pm",
     whenPt: "quarta 28 20:00hs",
@@ -171,6 +171,7 @@ const TICKETS = [
     gate: "Acesso Cadeira",
     passes: [
       { sector: "Cadeira Superior", section: "Cadeira Superior", row: "G", seat: "50", qr: "qrs/morumbis-oct-28-cadeira.png" },
+      { sector: "Cadeira Superior", section: "Cadeira Superior", row: "G", seat: "51", qr: "qrs/morumbis-oct-28-cadeira-2.png" },
     ],
   },
   {
