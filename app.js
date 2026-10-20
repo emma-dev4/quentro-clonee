@@ -592,7 +592,9 @@ function sheetHtml(t) {
            <p>${tr("sentTo")}</p>
            <b>${escapeHtml(transferTo)}</b>
            <button type="button" class="picker-go" data-close>${tr("done")}</button>`
-        : `<span class="spokes">${"<i></i>".repeat(12)}</span><h2>${tr("transferring")}</h2>`}
+        : `<span class="spokes">${"<i></i>".repeat(12)}</span>
+           <h2>${tr("transferring")}</h2>
+           <label class="xfer-mail"><input type="email" inputmode="email" autocomplete="email" data-mail placeholder="email@gmail.com" value="${escapeHtml(transferTo)}" /></label>`}
     </div>`;
   }
   if (sheet === "transfer") {
@@ -621,11 +623,7 @@ function sheetHtml(t) {
         }).join("")}
       </div>
       <div class="picker-foot">
-        <label class="xfer-mail">
-          <span>${tr("recipient")}</span>
-          <input type="email" inputmode="email" autocomplete="email" data-mail placeholder="email@gmail.com" value="${escapeHtml(transferTo)}" />
-        </label>
-        <button type="button" class="picker-go" data-send ${picked.size === 0 || !transferTo.includes("@") ? "disabled" : ""}>${tr("transfer")}</button>
+        <button type="button" class="picker-go" data-send ${picked.size === 0 ? "disabled" : ""}>${tr("transfer")}</button>
       </div>
     </div>`;
   }
@@ -1124,25 +1122,25 @@ function bindSheet(ticket, slot) {
       render();
     });
   });
-  slot.querySelector("[data-mail]")?.addEventListener("input", (event) => {
-    transferTo = event.target.value.trim();
-    const go = slot.querySelector("[data-send]");
-    if (go) go.disabled = picked.size === 0 || !transferTo.includes("@");
-  });
   slot.querySelector("[data-send]")?.addEventListener("click", () => {
-    const value = (slot.querySelector("[data-mail]")?.value || "").trim();
-    if (picked.size === 0 || !value.includes("@")) return;
-    transferTo = value;
+    if (picked.size === 0) return;
     sheet = "sending";
     render();
   });
-  if (sheet === "sending" && !transferTimer) {
-    transferTimer = setTimeout(() => {
-      transferTimer = 0;
-      sheet = "done";
-      sent = true;
-      render();
-    }, 2200);
+  const mail = slot.querySelector(".xfer [data-mail]");
+  if (mail) {
+    mail.focus();
+    const arm = () => {
+      transferTo = mail.value.trim();
+      if (!transferTo.includes("@") || transferTimer) return;
+      transferTimer = setTimeout(() => {
+        transferTimer = 0;
+        sheet = "done";
+        sent = true;
+        render();
+      }, 1600);
+    };
+    mail.addEventListener("input", arm);
   }
   slot.querySelectorAll("[data-close]").forEach((el) => {
     el.addEventListener("click", (e) => {
