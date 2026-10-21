@@ -301,7 +301,13 @@ const COPY = {
     purchase: "Purchase confirmation",
     helpBody: "For ticket transfers or account issues, write from your Quentro email. Your Quentro ID QR is on the first tab if someone needs to scan it.",
     select: "Select tickets", transfer: "Transfer ticket", transferred: "Transferred",
-    transferring: "Transferring", sentTo: "to", recipient: "Recipient email", done: "Done",
+    emailTitle: "Transfer the ticket",
+    emailHint: "Enter the recipient's email address",
+    confirmTitle: "Transfer this ticket to",
+    confirm: "Confirm", cancel: "Cancel",
+    hideTickets: "Hide tickets",
+    xferOne: "You transferred 1 ticket to",
+    xferMany: "You transferred {n} tickets to",
     event: "Event", more: "More info", sector: "Sector", access: "Access",
     section: "Section", row: "Row", seat: "Seat", doors: "Doors open", start: "Show start",
     copied: "Quentro ID copied",
@@ -325,7 +331,13 @@ const COPY = {
     purchase: "Confirmación de compra", needHelp: "¿Necesitás ayuda?", close: "Cerrar",
     helpBody: "Para transferencias o problemas de la cuenta, escribí desde tu correo de Quentro. El QR de tu Quentro ID está en la primera pestaña.",
     select: "Elegir entradas", transfer: "Transferir entrada", transferred: "Transferida",
-    transferring: "Transfiriendo", sentTo: "a", recipient: "Correo", done: "Listo",
+    emailTitle: "Transferir la entrada",
+    emailHint: "Ingresá el correo del destinatario",
+    confirmTitle: "Transferí esta entrada a",
+    confirm: "Confirmar", cancel: "Cancelar",
+    hideTickets: "Ocultar entradas",
+    xferOne: "Transferiste 1 entrada a",
+    xferMany: "Transferiste {n} entradas a",
     event: "Evento", more: "Más info", sector: "Sector", access: "Acceso",
     section: "Sección", row: "Fila", seat: "Asiento", doors: "Apertura puertas", start: "Inicio show",
     copied: "Quentro ID copiado",
@@ -348,8 +360,14 @@ const COPY = {
     help: "Precisa de ajuda?",
     purchase: "Confirmação de compra", needHelp: "Precisa de ajuda?", close: "Fechar",
     helpBody: "Para transferências ou problemas da conta, escreva do seu e-mail Quentro. O QR do Quentro ID está na primeira aba.",
-    select: "Escolher ingressos", transfer: "Transferir ingresso", transferred: "Transferido",
-    transferring: "Transferindo", sentTo: "para", recipient: "E-mail", done: "Pronto",
+    select: "Selecionar ingresso", transfer: "Transferir ingresso", transferred: "Transferido",
+    emailTitle: "Transferir o ingresso",
+    emailHint: "Digite o endereço de e-mail do destinatário",
+    confirmTitle: "Transfira este ingresso para",
+    confirm: "Confirme", cancel: "Cancelar",
+    hideTickets: "Ocultar ingressos",
+    xferOne: "Você transferiu 1 ingresso para",
+    xferMany: "Você transferiu {n} ingressos para",
     event: "Evento", more: "Mais info", sector: "Setor", access: "Acesso",
     section: "Seção", row: "Fileira", seat: "Assento", doors: "Portas abrindo", start: "Começar show",
     copied: "Quentro ID copiado",
@@ -359,7 +377,12 @@ const COPY = {
 };
 function tr(key) { return COPY[lang][key]; }
 const HIDE_KEY = "quentro-hidden";
+const XFER_KEY = "quentro-xfer";
+const NOTES_KEY = "quentro-notes";
 let hidden = new Set(JSON.parse(localStorage.getItem(HIDE_KEY) || "[]"));
+let notes = [];
+try { notes = JSON.parse(localStorage.getItem(NOTES_KEY) || "[]"); } catch { notes = []; }
+let settingsHide = false;
 let accountTab = "id";
 let editing = null;
 let helpOpen = false;
@@ -389,6 +412,33 @@ function saveProfile(next) {
   localStorage.setItem(PROFILE_KEY, JSON.stringify(next));
 }
 
+function goneMap() {
+  try { return JSON.parse(localStorage.getItem(XFER_KEY) || "{}"); }
+  catch { return {}; }
+}
+
+function syncTickets() {
+  const gone = goneMap();
+  for (const ticket of TICKETS) {
+    if (!ticket.allPasses) ticket.allPasses = ticket.passes.slice();
+    const used = new Set(gone[ticket.id] || []);
+    ticket.passes = ticket.allPasses.filter((_, index) => !used.has(index));
+    ticket.qty = ticket.passes.length;
+    if (ticket.qty === 0) hidden.add(ticket.id);
+  }
+}
+
+function isHidden(ticket) {
+  return !ticket || ticket.qty === 0 || hidden.has(ticket.id);
+}
+
+function noteLine(note) {
+  const lead = note.count === 1 ? tr("xferOne") : tr("xferMany").replace("{n}", note.count);
+  return `${lead} ${note.email}`;
+}
+
+syncTickets();
+
 function route() {
   const hash = location.hash.replace(/^#/, "") || "/";
   const match = hash.match(/^\/ticket\/([^/]+)/);
@@ -414,9 +464,6 @@ function render() {
       ${TICKETS.map((t) => `<div data-panel="ticket-${t.id}" hidden></div>`).join("")}
     `;
     app.dataset.mounted = "1";
-    panel("notifications").innerHTML = notificationsView();
-    panel("notifications").dataset.lang = lang;
-    bindNotifications();
     for (const ticket of TICKETS) {
       const node = panel(`ticket-${ticket.id}`);
       node.innerHTML = passView(ticket);
@@ -466,7 +513,7 @@ function render() {
         node.dataset.ready = "1";
       }
       const slot = node.querySelector("[data-sheet-slot]");
-      const sheetKey = `${sheet || ""}:${[...picked].join(".")}:${sent ? 1 : 0}`;
+      const sheetKey = `${sheet || ""}:${[...picked].join(".")}`;
       if (slot && slot.dataset.open !== sheetKey) {
         slot.innerHTML = sheetHtml(ticket);
         slot.dataset.open = sheetKey;
@@ -478,13 +525,19 @@ function render() {
   document.querySelectorAll("[data-panel]").forEach((el) => {
     el.hidden = el.dataset.panel !== active;
   });
+  const notesPanel = panel("notifications");
+  const stamp = `${notes.length}:${notes[0]?.email || ""}:${lang}`;
+  if (notesPanel && notesPanel.dataset.stamp !== stamp) {
+    notesPanel.innerHTML = notificationsView();
+    notesPanel.dataset.stamp = stamp;
+  }
   document.documentElement.classList.toggle("pass-lock", r.name === "ticket");
   applyHidden();
 }
 
 function listView() {
   const cards = TICKETS.map((ticket) => `
-    <a class="ticket-card" data-ticket-id="${ticket.id}" href="#/ticket/${ticket.id}" ${hidden.has(ticket.id) ? "hidden" : ""}>
+    <a class="ticket-card" data-ticket-id="${ticket.id}" href="#/ticket/${ticket.id}" ${isHidden(ticket) ? "hidden" : ""}>
       <img src="${ticket.thumb}" alt="" width="112" height="112" decoding="async" />
       <div class="meta">
         <p><span class="qty" data-qty="${ticket.id}">${qtyLabel(ticket)}</span> <span class="when" data-when="${ticket.id}">${whenOf(ticket)}</span></p>
@@ -493,7 +546,7 @@ function listView() {
       </div>
     </a>
   `).join("");
-  const anyVisible = TICKETS.some((ticket) => !hidden.has(ticket.id));
+  const anyVisible = TICKETS.some((ticket) => !isHidden(ticket));
 
   return `
     <div class="list-page">
@@ -583,18 +636,26 @@ function sheetHtml(t) {
       </div>
     </div>`;
   }
-  if (sheet === "sending" || sheet === "done") {
-    const done = sheet === "done";
-    return `<div class="xfer">
-      ${done
-        ? `<div class="xfer-ok"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#06221e" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></div>
-           <h2>${tr("transferred")}</h2>
-           <p>${tr("sentTo")}</p>
-           <b>${escapeHtml(transferTo)}</b>
-           <button type="button" class="picker-go" data-close>${tr("done")}</button>`
-        : `<span class="spokes">${"<i></i>".repeat(12)}</span>
-           <h2>${tr("transferring")}</h2>
-           <label class="xfer-mail"><input type="email" inputmode="email" autocomplete="email" data-mail placeholder="email@gmail.com" value="${escapeHtml(transferTo)}" /></label>`}
+  if (sheet === "email") {
+    return `<div class="overlay ask-overlay" data-close>
+      <div class="ask">
+        <span class="ask-grab"></span>
+        <h2>${tr("emailTitle")}</h2>
+        <p>${tr("emailHint")}</p>
+        <input class="ask-input" type="email" inputmode="email" autocomplete="email" data-mail placeholder="nome@example.com" value="${escapeHtml(transferTo)}" />
+        <button type="button" class="ask-go" data-email-go ${transferTo.includes("@") ? "" : "disabled"}>${tr("transfer")}</button>
+      </div>
+    </div>`;
+  }
+  if (sheet === "confirm") {
+    return `<div class="overlay ask-overlay" data-close>
+      <div class="ask">
+        <span class="ask-grab"></span>
+        <h2>${tr("confirmTitle")}</h2>
+        <div class="ask-email">${escapeHtml(transferTo)}</div>
+        <button type="button" class="ask-go" data-confirm>${tr("confirm")}</button>
+        <button type="button" class="ask-cancel" data-close>${tr("cancel")}</button>
+      </div>
     </div>`;
   }
   if (sheet === "transfer") {
@@ -639,28 +700,24 @@ function notFound() {
 }
 
 function notificationsView() {
-  const rows = TICKETS.map((ticket) => `
-    <button type="button" class="hide-row ${hidden.has(ticket.id) ? "is-hidden" : ""}" data-hide-id="${ticket.id}">
-      <img src="${ticket.thumb}" alt="" width="80" height="80" />
-      <span><b>${ticket.title}</b><small>${ticket.dateLabel}</small></span>
-      <span class="tag" data-hide-label>${hidden.has(ticket.id) ? tr("unhide") : tr("hide")}</span>
-    </button>
+  const items = notes.map((note) => `
+    <article class="note">
+      <b>${escapeHtml(note.title || "")}</b>
+      <p>${escapeHtml(noteLine(note))}</p>
+    </article>
   `).join("");
   return `
     <div class="screen">
       <header class="screen-header">
         <a class="back" href="#/" aria-label="Back">${ICONS.back}</a>
         <h1 data-i18n="notifications">${tr("notifications")}</h1>
-        <button class="hide-open" type="button" data-hide-open aria-label="${tr("hide")}">${ICONS.eye}</button>
       </header>
-      <div class="notify-empty" data-notify-empty>
-        <div class="notify-bell">${ICONS.bell}</div>
-        <p data-i18n="noNotes">${tr("noNotes")}</p>
-      </div>
-      <div class="hide-list" data-hide-list hidden>
-        <p class="hide-hint" data-i18n="hideHint">${tr("hideHint")}</p>
-        ${rows}
-      </div>
+      ${notes.length
+        ? `<div class="note-list">${items}</div>`
+        : `<div class="notify-empty">
+            <div class="notify-bell">${ICONS.bell}</div>
+            <p>${tr("noNotes")}</p>
+          </div>`}
     </div>
   `;
 }
@@ -862,6 +919,17 @@ function accountView() {
             </div>`
           : `<div class="settings">
               <a class="mail-open" href="#/mail" data-i18n="purchase">${tr("purchase")}</a>
+              <button type="button" class="hide-settings" data-settings-hide>${tr("hideTickets")}</button>
+              ${settingsHide ? `<div class="hide-list">
+                <p class="hide-hint">${tr("hideHint")}</p>
+                ${TICKETS.map((ticket) => `
+                  <button type="button" class="hide-row ${hidden.has(ticket.id) ? "is-hidden" : ""}" data-hide-id="${ticket.id}">
+                    <img src="${ticket.thumb}" alt="" width="80" height="80" />
+                    <span><b>${ticket.title}</b><small>${dateOf(ticket)}</small></span>
+                    <span class="tag">${hidden.has(ticket.id) ? tr("unhide") : tr("hide")}</span>
+                  </button>
+                `).join("")}
+              </div>` : ""}
               <h2 data-i18n="language">${tr("language")}</h2>
               <div class="lang-picks">
                 <button type="button" data-set-lang="en" class="${lang === "en" ? "on" : ""}">English</button>
@@ -938,7 +1006,8 @@ function applyLang() {
 function applyHidden() {
   let shown = 0;
   document.querySelectorAll(".ticket-card").forEach((card) => {
-    const off = hidden.has(card.dataset.ticketId);
+    const ticket = TICKETS.find((item) => item.id === card.dataset.ticketId);
+    const off = isHidden(ticket);
     card.hidden = off;
     if (!off) shown += 1;
   });
@@ -948,7 +1017,7 @@ function applyHidden() {
   document.querySelectorAll("[data-hide-id]").forEach((row) => {
     const off = hidden.has(row.dataset.hideId);
     row.classList.toggle("is-hidden", off);
-    const label = row.querySelector("[data-hide-label]");
+    const label = row.querySelector(".tag");
     if (label) label.textContent = off ? tr("unhide") : tr("hide");
   });
 }
@@ -980,6 +1049,23 @@ function bindAccount() {
       editing = null;
       helpOpen = false;
       render();
+    });
+  });
+  document.querySelector("[data-settings-hide]")?.addEventListener("click", () => {
+    settingsHide = !settingsHide;
+    render();
+  });
+  document.querySelectorAll("[data-hide-id]").forEach((row) => {
+    row.addEventListener("click", () => {
+      const id = row.dataset.hideId;
+      if (hidden.has(id)) hidden.delete(id);
+      else hidden.add(id);
+      const ticket = TICKETS.find((item) => item.id === id);
+      if (ticket && ticket.qty === 0) hidden.add(id);
+      localStorage.setItem(HIDE_KEY, JSON.stringify([...hidden]));
+      applyHidden();
+      const list = panel("list");
+      if (list) delete list.dataset.lang;
     });
   });
   document.querySelector("[data-pin]")?.addEventListener("click", () => {
@@ -1113,6 +1199,38 @@ function bindList() {
   });
 }
 
+function finishTransfer(ticket) {
+  const map = goneMap();
+  const already = new Set(map[ticket.id] || []);
+  const liveIndexes = ticket.allPasses.map((_, index) => index).filter((index) => !already.has(index));
+  let count = 0;
+  for (const key of picked) {
+    const original = liveIndexes[Number(key)];
+    if (original == null || already.has(original)) continue;
+    already.add(original);
+    count += 1;
+  }
+  if (!count) return;
+  map[ticket.id] = [...already];
+  localStorage.setItem(XFER_KEY, JSON.stringify(map));
+  notes.unshift({ email: transferTo, count, title: ticket.title });
+  localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
+  syncTickets();
+  localStorage.setItem(HIDE_KEY, JSON.stringify([...hidden]));
+  sheet = null;
+  transferTo = "";
+  picked = new Set();
+  passIndex[ticket.id] = 0;
+  const node = panel(`ticket-${ticket.id}`);
+  if (node) delete node.dataset.ready;
+  const list = panel("list");
+  if (list) delete list.dataset.lang;
+  const notesPanel = panel("notifications");
+  if (notesPanel) delete notesPanel.dataset.stamp;
+  if (ticket.qty === 0) history.pushState(null, "", "#/");
+  render();
+}
+
 function bindSheet(ticket, slot) {
   slot.querySelectorAll("[data-pick]").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -1124,43 +1242,39 @@ function bindSheet(ticket, slot) {
   });
   slot.querySelector("[data-send]")?.addEventListener("click", () => {
     if (picked.size === 0) return;
-    sheet = "sending";
+    sheet = "email";
     render();
   });
-  const mail = slot.querySelector(".xfer [data-mail]");
-  if (mail) {
-    mail.focus();
-    const arm = () => {
-      transferTo = mail.value.trim();
-      if (!transferTo.includes("@") || transferTimer) return;
-      transferTimer = setTimeout(() => {
-        transferTimer = 0;
-        sheet = "done";
-        sent = true;
-        render();
-      }, 1600);
-    };
-    mail.addEventListener("input", arm);
-  }
+  const mail = slot.querySelector("[data-mail]");
+  const go = slot.querySelector("[data-email-go]");
+  mail?.addEventListener("input", () => {
+    transferTo = mail.value.trim();
+    if (go) go.disabled = !transferTo.includes("@");
+  });
+  go?.addEventListener("click", () => {
+    const value = (mail?.value || "").trim();
+    if (!value.includes("@")) return;
+    transferTo = value;
+    sheet = "confirm";
+    render();
+  });
+  slot.querySelector("[data-confirm]")?.addEventListener("click", () => finishTransfer(ticket));
   slot.querySelectorAll("[data-close]").forEach((el) => {
     el.addEventListener("click", (e) => {
       if (el.classList.contains("overlay") && e.target !== el) return;
-      if (transferTimer) {
-        clearTimeout(transferTimer);
-        transferTimer = 0;
-      }
       sheet = null;
       transferTo = "";
       render();
     });
   });
   slot.querySelector(".sheet")?.addEventListener("click", (e) => e.stopPropagation());
+  slot.querySelector(".ask")?.addEventListener("click", (e) => e.stopPropagation());
 }
 
 function bindPass(ticket, root) {
   if (!ticket || !root) return;
-  const track = root.querySelector("[data-pass-track]");
   const go = (index) => {
+    const track = root.querySelector("[data-pass-track]");
     const max = ticket.passes.length - 1;
     passIndex[ticket.id] = Math.max(0, Math.min(max, index));
     const page = track?.querySelector(".pass-page");
@@ -1169,33 +1283,36 @@ function bindPass(ticket, root) {
     const step = page.getBoundingClientRect().width + gap;
     track.style.transform = `translateX(${-passIndex[ticket.id] * step}px)`;
   };
+  if (!root.dataset.swipe) {
+    root.dataset.swipe = "1";
+    let startX = 0;
+    let mode = "";
+    const finish = (x) => {
+      const dx = x - startX;
+      mode = "";
+      if (dx < -36) go((passIndex[ticket.id] || 0) + 1);
+      else if (dx > 36) go((passIndex[ticket.id] || 0) - 1);
+    };
+    root.addEventListener("touchstart", (event) => {
+      if (event.target.closest("a, button, .ask, .picker")) return;
+      mode = "touch";
+      startX = event.touches[0].clientX;
+    }, { passive: true });
+    root.addEventListener("touchend", (event) => {
+      if (mode !== "touch") return;
+      finish(event.changedTouches[0].clientX);
+    });
+    root.addEventListener("pointerdown", (event) => {
+      if (mode === "touch" || event.target.closest("a, button, .ask, .picker")) return;
+      mode = "pointer";
+      startX = event.clientX;
+    });
+    window.addEventListener("pointerup", (event) => {
+      if (mode !== "pointer" || root.hidden) return;
+      finish(event.clientX);
+    });
+  }
   go(passIndex[ticket.id] || 0);
-  let startX = 0;
-  let mode = "";
-  const finish = (x) => {
-    const dx = x - startX;
-    mode = "";
-    if (dx < -36) go((passIndex[ticket.id] || 0) + 1);
-    else if (dx > 36) go((passIndex[ticket.id] || 0) - 1);
-  };
-  root.addEventListener("touchstart", (event) => {
-    if (event.target.closest("a, button")) return;
-    mode = "touch";
-    startX = event.touches[0].clientX;
-  }, { passive: true });
-  root.addEventListener("touchend", (event) => {
-    if (mode !== "touch") return;
-    finish(event.changedTouches[0].clientX);
-  });
-  root.addEventListener("pointerdown", (event) => {
-    if (mode === "touch" || event.target.closest("a, button")) return;
-    mode = "pointer";
-    startX = event.clientX;
-  });
-  window.addEventListener("pointerup", (event) => {
-    if (mode !== "pointer" || root.hidden) return;
-    finish(event.clientX);
-  });
   root.querySelectorAll("[data-info]").forEach((btn) => {
     btn.addEventListener("click", () => {
       sheet = "info";
@@ -1212,7 +1329,7 @@ function bindPass(ticket, root) {
 
 document.addEventListener("touchmove", (event) => {
   if (!document.documentElement.classList.contains("pass-lock")) return;
-  if (event.target.closest(".sheet, .picker-list")) return;
+  if (event.target.closest(".sheet, .picker-list, .ask")) return;
   event.preventDefault();
 }, { passive: false });
 
