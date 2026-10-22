@@ -279,6 +279,7 @@ let sheet = null;
 let sent = false;
 let transferTo = "";
 let transferTimer = 0;
+let emailHold = 0;
 let picked = new Set(["37"]);
 const LANG_KEY = "quentro-lang";
 const savedLang = localStorage.getItem(LANG_KEY);
@@ -304,7 +305,7 @@ const COPY = {
     emailTitle: "Transfer the ticket",
     emailHint: "Enter the recipient's email address",
     confirmTitle: "Transfer this ticket to",
-    confirm: "Confirm", cancel: "Cancel",
+    confirm: "Confirm", cancel: "Cancel", send: "Transfer",
     hideTickets: "Hide tickets",
     xferOne: "You transferred 1 ticket to",
     xferMany: "You transferred {n} tickets to",
@@ -334,7 +335,7 @@ const COPY = {
     emailTitle: "Transferir la entrada",
     emailHint: "Ingresá el correo del destinatario",
     confirmTitle: "Transferí esta entrada a",
-    confirm: "Confirmar", cancel: "Cancelar",
+    confirm: "Confirmar", cancel: "Cancelar", send: "Transferir",
     hideTickets: "Ocultar entradas",
     xferOne: "Transferiste 1 entrada a",
     xferMany: "Transferiste {n} entradas a",
@@ -364,7 +365,7 @@ const COPY = {
     emailTitle: "Transferir o ingresso",
     emailHint: "Digite o endereço de e-mail do destinatário",
     confirmTitle: "Transfira este ingresso para",
-    confirm: "Confirme", cancel: "Cancelar",
+    confirm: "Confirme", cancel: "Cancelar", send: "Transferir",
     hideTickets: "Ocultar ingressos",
     xferOne: "Você transferiu 1 ingresso para",
     xferMany: "Você transferiu {n} ingressos para",
@@ -643,7 +644,7 @@ function sheetHtml(t) {
         <h2>${tr("emailTitle")}</h2>
         <p>${tr("emailHint")}</p>
         <input class="ask-input" type="email" inputmode="email" autocomplete="email" data-mail placeholder="nome@example.com" value="${escapeHtml(transferTo)}" />
-        <button type="button" class="ask-go" data-email-go ${transferTo.includes("@") ? "" : "disabled"}>${tr("transfer")}</button>
+        <button type="button" class="ask-go" data-email-go disabled>${tr("send")}</button>
       </div>
     </div>`;
   }
@@ -1240,8 +1241,12 @@ function bindSheet(ticket, slot) {
       render();
     });
   });
-  slot.querySelector("[data-send]")?.addEventListener("click", () => {
+  slot.querySelector("[data-send]")?.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
     if (picked.size === 0) return;
+    transferTo = "";
+    emailHold = Date.now() + 700;
     sheet = "email";
     render();
   });
@@ -1251,8 +1256,11 @@ function bindSheet(ticket, slot) {
     transferTo = mail.value.trim();
     if (go) go.disabled = !transferTo.includes("@");
   });
-  go?.addEventListener("click", () => {
-    const value = (mail?.value || "").trim();
+  go?.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (Date.now() < emailHold) return;
+    const value = (mail?.value || transferTo).trim();
     if (!value.includes("@")) return;
     transferTo = value;
     sheet = "confirm";
